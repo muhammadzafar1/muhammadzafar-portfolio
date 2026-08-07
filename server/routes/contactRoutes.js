@@ -3,6 +3,7 @@ import { body } from 'express-validator'
 import { submitContact, getMessages } from '../controllers/contactController.js'
 import { protect } from '../middlewares/authMiddleware.js'
 import { validateRequest } from '../middlewares/validators.js'
+import { asyncHandler } from '../middlewares/asyncHandler.js'
 
 const router = express.Router()
 router.post(
@@ -14,7 +15,8 @@ router.post(
     body('message').trim().notEmpty().withMessage('Message is required').escape()
   ],
   validateRequest,
-  submitContact
+  asyncHandler(submitContact)
 )
-router.get('/', protect, getMessages)
+router.get('/', protect, asyncHandler(getMessages))
 export default router
+

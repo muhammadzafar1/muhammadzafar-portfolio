@@ -8,10 +8,17 @@ export async function getHero(req, res) {
 
 export async function updateHero(req, res) {
   const updates = req.body
-  if (req.file) {
-    if (req.file.fieldname === 'heroImage') updates.heroImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
-    if (req.file.fieldname === 'backgroundImage') updates.backgroundImage = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`
+  // multer's upload.fields() populates req.files (object keyed by field name),
+  // NOT req.file. Fix: read from req.files.heroImage / req.files.backgroundImage.
+  if (req.files) {
+    if (req.files.heroImage?.[0]) {
+      updates.heroImage = `${req.protocol}://${req.get('host')}/uploads/${req.files.heroImage[0].filename}`
+    }
+    if (req.files.backgroundImage?.[0]) {
+      updates.backgroundImage = `${req.protocol}://${req.get('host')}/uploads/${req.files.backgroundImage[0].filename}`
+    }
   }
   const hero = await Hero.findOneAndUpdate({}, updates, { new: true, upsert: true })
   res.json(hero)
 }
+

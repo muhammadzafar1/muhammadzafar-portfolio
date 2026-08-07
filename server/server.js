@@ -6,6 +6,8 @@ import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 dotenv.config()
 import bcrypt from 'bcryptjs'
+import fs from 'fs'
+import path from 'path'
 import connectDb from './config/db.js'
 import User from './models/User.js'
 import authRoutes from './routes/authRoutes.js'
@@ -23,10 +25,23 @@ import messageRoutes from './routes/messageRoutes.js'
 import mediaRoutes from './routes/mediaRoutes.js'
 import { errorHandler } from './middlewares/errorHandler.js'
 
+// ── Required environment variable validation ──────────────────────────────
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET']
+const missing = requiredEnvVars.filter((key) => !process.env[key])
+if (missing.length > 0) {
+  console.error(`FATAL: Missing required environment variables: ${missing.join(', ')}`)
+  process.exit(1)
+}
 
-console.log("EMAIL_USER", process.env.EMAIL_USER);
-console.log("EMAIL_PASS", process.env.EMAIL_PASS ? "Loaded" : "Not Loaded");
-console.log("EMAIL_PASS Length:", process.env.EMAIL_PASS?.length);
+// ── Upload directories (create on startup so Multer never fails) ──────────
+const uploadDirs = ['uploads', 'uploads/projects', 'uploads/resume']
+for (const dir of uploadDirs) {
+  const fullPath = path.join(process.cwd(), dir)
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true })
+  }
+}
+
 const app = express()
 
 const ensureAdminExists = async () => {
@@ -57,11 +72,43 @@ const ensureAdminExists = async () => {
   }
 }
 
+// ── Middleware (order matters) ────────────────────────────────────────────
 app.use(helmet())
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
+
+// trust proxy — required on Railway (behind load balancer) so that
+// express sees the real client IP (for rate-limiting) and the correct
+// protocol (req.protocol → 'https') for uploaded file URLs.
+app.set('trust proxy', 1)
+
+// ── CORS ──────────────────────────────────────────────────────────────────
+// Allow the production origin(s) from CORS_ORIGIN (comma-separated) plus the
+// standard localhost dev origins used by the Vite frontend. This is required
+// so the React app works BOTH locally (http://localhost:5173) and when
+// deployed (e.g. Vercel), without the browser blocking requests as CORS.
+const devOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:3000'
+]
+const envOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+  : []
+
+app.use(cors({
+  origin: envOrigins.includes('*') ? '*' : [...new Set([...envOrigins, ...devOrigins])],
+  credentials: true
+}))
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(morgan('tiny'))
+
+// Sanitised morgan — log method, url, status, response-time only
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
+
 app.use('/uploads', express.static('uploads'))
 
 const limiter = rateLimit({
@@ -73,6 +120,7 @@ const limiter = rateLimit({
 
 app.use(limiter)
 
+// ── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes)
 app.use('/api/hero', heroRoutes)
 app.use('/api/about', aboutRoutes)
@@ -109,6 +157,6 @@ const startServer = async () => {
 startServer()
 
 process.on('unhandledRejection', (error) => {
-  console.error('Unhandled Rejection:', error)
+  console.error('Unhandled Rejection:', error.message)
   process.exit(1)
 })

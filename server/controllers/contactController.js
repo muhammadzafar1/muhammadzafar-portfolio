@@ -3,8 +3,6 @@ import Message from "../models/Message.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-
-
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
@@ -14,13 +12,17 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("SMTP Error:", error);
-  } else {
-    console.log("SMTP Server is ready");
-  }
-});
+
+// Only verify SMTP when credentials are actually provided
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  transporter.verify((error) => {
+    if (error) {
+      console.log("SMTP Error:", error.message);
+    } else {
+      console.log("SMTP Server is ready");
+    }
+  });
+}
 
 async function sendNotificationEmail({
   name,
@@ -58,20 +60,46 @@ async function sendNotificationEmail({
     `,
   };
 
+  console.log("📤 Sending notification email...");
+  console.log("   To:", mailOptions.to);
+  console.log("   Subject:", mailOptions.subject);
+
   await transporter.sendMail(mailOptions);
+
+  console.log("✅ Notification email sent successfully");
 }
 
 export async function submitContact(req, res) {
-  try {
-    const { name, email, subject, message } = req.body;
+  console.log("========== CONTACT DEBUG ==========");
+  console.log("Received contact request at:", new Date().toISOString());
+  console.log("Body:", JSON.stringify(req.body));
 
-    const newMessage = await Message.create({
-      name,
-      email,
-      subject,
-      message,
+  const { name, email, subject, message } = req.body;
+
+  if (!name || !email || !subject || !message) {
+    console.log("❌ Missing required fields");
+    return res.status(400).json({
+      success: false,
+      message: "All fields are required.",
     });
+  }
 
+  console.log("Persisting message to MongoDB...");
+
+  // Always persist the contact message first
+  const newMessage = await Message.create({
+    name,
+    email,
+    subject,
+    message,
+  });
+
+  console.log("✅ Message saved to DB with id:", newMessage._id);
+
+  // Email notification is best-effort: if SMTP fails (e.g. not configured
+  // on Railway yet), the contact message is still saved and the visitor
+  // still gets a success response. The error is logged, not fatal.
+  try {
     await sendNotificationEmail({
       name: newMessage.name,
       email: newMessage.email,
@@ -79,33 +107,19 @@ export async function submitContact(req, res) {
       message: newMessage.message,
       createdAt: newMessage.createdAt,
     });
+  } catch (emailError) {
+    console.error("Contact notification email failed:", emailError.message);
+  }
 
-    res.status(200).json({
-      success: true,
-      message: "Message sent successfully.",
-    });
-  }catch (error) {
-  console.error("============== ERROR ==============");
-  console.error(error);
-  console.error("Message:", error.message);
-  console.error("Stack:", error.stack);
-
-  return res.status(500).json({
-    success: false,
-    message: error.message,
+  console.log("📨 Responding success to client");
+  res.status(200).json({
+    success: true,
+    message: "Message sent successfully.",
   });
-}
 }
 
 export async function getMessages(req, res) {
-  try {
-    const messages = await Message.find().sort({ createdAt: -1 });
-
-    res.json(messages);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+  const messages = await Message.find().sort({ createdAt: -1 });
+  res.json(messages);
 }
+

@@ -4,6 +4,7 @@ import fs from 'fs'
 import path from 'path'
 import { getResume, uploadResume, replaceResume, deleteResume } from '../controllers/resumeController.js'
 import { protect } from '../middlewares/authMiddleware.js'
+import { asyncHandler } from '../middlewares/asyncHandler.js'
 
 const router = express.Router()
 const storage = multer.diskStorage({
@@ -33,8 +34,9 @@ const upload = multer({
   fileFilter
 })
 
-router.get('/', getResume)
-router.post('/upload', protect, upload.single('resume'), uploadResume)
-router.put('/replace', protect, upload.single('resume'), replaceResume)
-router.delete('/delete', protect, deleteResume)
+router.get('/', asyncHandler(getResume))
+router.post('/upload', protect, upload.single('resume'), asyncHandler(uploadResume))
+router.put('/replace', protect, upload.single('resume'), asyncHandler(replaceResume))
+router.delete('/delete', protect, asyncHandler(deleteResume))
 export default router
+
