@@ -1,3 +1,20 @@
+# Production Deployment Fix (Vercel + Render)
+
+## Steps
+- [x] 1. Created client/public/ and copied logo.png -> client/public/logo.png (favicon)
+- [x] 2. Updated client/index.html icon link to <link rel="icon" type="image/png" href="/logo.png" />
+- [x] 3. Set client/.env VITE_API_BASE_URL=https://muhammadzafar-portfolio.onrender.com/api (Render production URL)
+- [x] 4. Hardcoded Vercel origin https://muhammadzafar-portfolio.vercel.app into CORS defaults in server/server.js (credentials: true)
+- [x] 5. Added withCredentials: true to axios instance in client/src/services/api.js
+
+## Deployment Checklist (manual)
+- [x] Commit & push changes to trigger Vercel rebuild (public/ folder must be included)
+- [x] On Render, ensure env vars set: MONGODB_URI, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, CORS_ORIGIN, EMAIL_USER, EMAIL_PASS
+- [ ] Verify https://muhammadzafar-portfolio.vercel.app/logo.png returns the favicon
+- [ ] Verify contact form posts to /api/contact (200) and login to /api/auth/login (200) without CORS errors
+
+---
+
 # Backend Fix Plan (server/)
 
 ## Steps
