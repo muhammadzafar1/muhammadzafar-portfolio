@@ -10,7 +10,11 @@ router.get('/', asyncHandler(getSkills))
 router.post(
   '/',
   protect,
-  [body('label').notEmpty(), body('category').notEmpty(), body('progress').isInt({ min: 0, max: 100 })],
+  [
+    body('name').trim().notEmpty().withMessage('Skill name is required'),
+    body('category').trim().notEmpty().withMessage('Category is required'),
+    body('icon').optional().isString().withMessage('Icon must be a string')
+  ],
   validateRequest,
   asyncHandler(createSkill)
 )

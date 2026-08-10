@@ -81,29 +81,48 @@ app.use(helmet())
 app.set('trust proxy', 1)
 
 // ── CORS ──────────────────────────────────────────────────────────────────
-// Allow the production origin(s) from CORS_ORIGIN (comma-separated) plus the
-// standard localhost dev origins used by the Vite frontend. This is required
-// so the React app works BOTH locally (http://localhost:5173) and when
-// deployed (e.g. Vercel), without the browser blocking requests as CORS.
-const devOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:5175',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174',
-  'http://127.0.0.1:3000',
-  // Production Vercel frontend
+const allowedOrigins = [
+  'https://www.muhammadzafar.online',
+  'https://muhammadzafar.online',
   'https://muhammadzafar-portfolio.vercel.app',
- 
-  'https://www.muhammadzafar.online'
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'http://localhost:5175'
 ]
+
 const envOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
   : []
 
+const corsOrigins = [...new Set([...envOrigins, ...allowedOrigins])]
+
 app.use(cors({
-  origin: envOrigins.includes('*') ? '*' : [...new Set([...envOrigins, ...devOrigins])],
+  origin(origin, callback) {
+    if (!origin) {
+      // allow non-browser tools like Postman, or same-origin requests without Origin header
+      return callback(null, true)
+    }
+
+    if (corsOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+
+    return callback(new Error(`CORS origin denied: ${origin}`), false)
+  },
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+}))
+
+app.options('*', cors({
+  origin(origin, callback) {
+    if (!origin) return callback(null, true)
+    return corsOrigins.includes(origin) ? callback(null, true) : callback(new Error(`CORS origin denied: ${origin}`), false)
+  },
   credentials: true
 }))
 

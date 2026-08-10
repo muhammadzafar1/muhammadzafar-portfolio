@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   withCredentials: true,
 })
 
@@ -20,5 +22,7 @@ export const deleteProject = (id, token) => api.delete(`/projects/${id}`, { head
 export const fetchMessages = (token) => api.get('/messages', { headers: { Authorization: `Bearer ${token}` } })
 export const deleteMessage = (id, token) => api.delete(`/messages/${id}`, { headers: { Authorization: `Bearer ${token}` } })
 export const markMessageRead = (id, token) => api.put(`/messages/${id}/read`, null, { headers: { Authorization: `Bearer ${token}` } })
+export const createSkill = (payload, token) => api.post('/skills', payload, { headers: { Authorization: `Bearer ${token}` } })
+export const deleteSkill = (id, token) => api.delete(`/skills/${id}`, { headers: { Authorization: `Bearer ${token}` } })
 
 export default api

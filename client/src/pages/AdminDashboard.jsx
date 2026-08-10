@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { AdminContext } from '../context/AdminContext.jsx'
 import { fetchProjects, createProject, updateProject, deleteProject, fetchMessages, deleteMessage, markMessageRead, fetchResume, uploadResume, replaceResume, deleteResume } from '../services/api'
+import SkillManager from '../components/SkillManager.jsx'
 
 const emptyProjectForm = {
   title: '',
@@ -302,6 +303,8 @@ export default function AdminDashboard() {
             {resumeMessage && <div className="mt-4 rounded-3xl bg-emerald-50 px-5 py-4 text-sm text-emerald-700">{resumeMessage}</div>}
             {resumeError && <div className="mt-4 rounded-3xl bg-red-50 px-5 py-4 text-sm text-red-700">{resumeError}</div>}
           </div>
+
+          <SkillManager />
 
           <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-soft">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
