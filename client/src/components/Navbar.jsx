@@ -23,7 +23,7 @@ export default function Navbar() {
   }, [])
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 h-20 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
+    <header className="fixed inset-x-0 top-0 z-50 h-20 border-b border-slate-200/80 bg-white">
       <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between px-6">
         <a href="#home" className="flex items-center gap-3 text-lg font-semibold text-slate-900">
           <img
@@ -72,10 +72,10 @@ export default function Navbar() {
         </button>
       </div>
 
-      {open && (
+        {open && (
         <>
-          {/* Overlay */}
-          <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden" onClick={() => setOpen(false)} />
+          {/* Overlay (transparent - captures clicks, does not blur) */}
+          <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setOpen(false)} />
           {/* Mobile Menu */}
           <div className="fixed right-0 top-0 z-50 h-full w-72 border-l border-slate-200 bg-white p-6 shadow-xl lg:hidden">
             <div className="flex flex-col gap-4">

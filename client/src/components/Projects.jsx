@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FaExternalLinkAlt, FaGithub } from 'react-icons/fa'
 import { useProjects } from '../hooks/useProjects'
+import placeholder from '../assets/images/placeholder.svg'
 
 const filters = ['All', 'Frontend', 'Backend', 'MERN', 'Full Stack']
 
@@ -66,12 +67,13 @@ export default function Projects() {
                 viewport={{ once: true }}
                 className="group overflow-hidden rounded-[16px] border border-[#E5E7EB] bg-white shadow-soft transition duration-300 hover:shadow-lg hover:shadow-primary/90"
               >
-                <div className="relative overflow-hidden rounded-t-[16px] bg-slate-100">
+                  <div className="relative overflow-hidden rounded-t-[16px] bg-slate-100">
                   <div className="aspect-[16/9] w-full overflow-hidden">
                     <motion.img
-                      src={project.image}
-                      alt={project.title}
-                      className="h-full w-full object-cover"
+                      src={project.image || placeholder}
+                      alt={project.title || 'Project image'}
+                      loading="lazy"
+                      className="h-full w-full object-cover rounded-t-[16px]"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.5 }}
                     />
