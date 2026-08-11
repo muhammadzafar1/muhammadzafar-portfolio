@@ -1,26 +1,16 @@
 import axios from 'axios'
 
-const envBase = import.meta.env.VITE_API_BASE_URL || ''
-// Prefer a production env variable when present. During Vite dev (`import.meta.env.DEV`),
-// force the local backend so local testing (login, admin) hits `http://localhost:5000`.
-let API_BASE_URL = envBase || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://muhammadzafar-portfolio.onrender.com/api')
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: {
-    // Prefer fresh data for public endpoints
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    Pragma: 'no-cache',
-    Expires: '0'
-  }
 })
 
-// GET helpers include a timestamp query param to avoid stale cached GET responses
-export const fetchHero = () => api.get('/hero', { params: { t: Date.now() } })
-export const fetchProjects = () => api.get('/projects', { params: { t: Date.now() } })
-export const fetchSkills = () => api.get('/skills', { params: { t: Date.now() } })
-export const fetchResume = () => api.get('/resume', { params: { t: Date.now() } })
+export const fetchHero = () => api.get('/hero')
+export const fetchProjects = () => api.get('/projects')
+export const fetchSkills = () => api.get('/skills')
+export const fetchResume = () => api.get('/resume')
 export const uploadResume = (payload, config) => api.post('/resume/upload', payload, config)
 export const replaceResume = (payload, config) => api.put('/resume/replace', payload, config)
 export const deleteResume = (token) => api.delete('/resume/delete', { headers: { Authorization: `Bearer ${token}` } })
