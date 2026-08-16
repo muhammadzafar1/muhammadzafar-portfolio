@@ -3,16 +3,33 @@ import { AdminContext } from '../context/AdminContext.jsx'
 import { fetchProjects, createProject, updateProject, deleteProject, fetchMessages, deleteMessage, markMessageRead, fetchResume, uploadResume, replaceResume, deleteResume } from '../services/api'
 import SkillManager from '../components/SkillManager.jsx'
 
+const iconOptions = [
+  'FaShoppingCart',
+  'FaChartBar',
+  'FaTasks',
+  'FaHome',
+  'FaBlog',
+  'FaUser',
+  'FaCode',
+  'FaDatabase',
+  'FaServer',
+  'FaComments',
+  'FaBriefcase',
+  'FaLaptopCode'
+]
+
+const projectCategoryOptions = ['Frontend', 'Backend', 'Full Stack', 'React', 'Node.js', 'Other']
+
 const emptyProjectForm = {
   title: '',
   description: '',
-  category: '',
+  category: 'Frontend',
   technologies: '',
-  github: '',
-  liveDemo: '',
-  featured: false,
-  thumbnail: null,
-  images: []
+  githubUrl: '',
+  liveUrl: '',
+  icon: 'FaCode',
+  status: 'New',
+  featured: false
 }
 
 export default function AdminDashboard() {
@@ -66,15 +83,7 @@ export default function AdminDashboard() {
   const handleLogout = () => setToken(null)
 
   const handleFormChange = (event) => {
-    const { name, value, type, checked, files } = event.target
-    if (name === 'thumbnail') {
-      setFormState((prev) => ({ ...prev, thumbnail: files[0] || null }))
-      return
-    }
-    if (name === 'images') {
-      setFormState((prev) => ({ ...prev, images: Array.from(files || []) }))
-      return
-    }
+    const { name, value, type, checked } = event.target
     if (type === 'checkbox') {
       setFormState((prev) => ({ ...prev, [name]: checked }))
       return
@@ -156,15 +165,15 @@ export default function AdminDashboard() {
   const handleEdit = (project) => {
     setEditProjectId(project._id)
     setFormState({
-      title: project.title,
-      description: project.description,
-      category: project.category,
-      technologies: project.technologies.join(', '),
-      github: project.github,
-      liveDemo: project.liveDemo,
-      featured: project.featured,
-      thumbnail: null,
-      images: []
+      title: project.title || '',
+      description: project.description || '',
+      category: project.category || 'Other',
+      technologies: Array.isArray(project.technologies) ? project.technologies.join(', ') : '',
+      githubUrl: project.githubUrl || project.github || '',
+      liveUrl: project.liveUrl || project.liveDemo || '',
+      icon: project.icon || 'FaCode',
+      status: project.status || 'New',
+      featured: Boolean(project.featured)
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -209,11 +218,13 @@ export default function AdminDashboard() {
       formData.append('description', formState.description)
       formData.append('category', formState.category)
       formData.append('technologies', formState.technologies)
-      formData.append('github', formState.github)
-      formData.append('liveDemo', formState.liveDemo)
-      formData.append('featured', formState.featured)
-      if (formState.thumbnail) formData.append('thumbnail', formState.thumbnail)
-      formState.images.forEach((file) => formData.append('images', file))
+      formData.append('github', formState.githubUrl)
+      formData.append('githubUrl', formState.githubUrl)
+      formData.append('liveDemo', formState.liveUrl)
+      formData.append('liveUrl', formState.liveUrl)
+      formData.append('icon', formState.icon)
+      formData.append('status', formState.status)
+      formData.append('featured', String(formState.featured))
 
       let response
       if (editProjectId) {
@@ -324,7 +335,11 @@ export default function AdminDashboard() {
               </label>
               <label className="grid gap-2 text-sm font-medium text-slate-700">
                 Category
-                <input name="category" value={formState.category} onChange={handleFormChange} required className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                <select name="category" value={formState.category} onChange={handleFormChange} required className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">
+                  {projectCategoryOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
               </label>
             </div>
 
@@ -339,15 +354,34 @@ export default function AdminDashboard() {
                 <input name="technologies" value={formState.technologies} onChange={handleFormChange} required className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </label>
               <label className="grid gap-2 text-sm font-medium text-slate-700">
+                Project Icon
+                <select name="icon" value={formState.icon} onChange={handleFormChange} className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">
+                  {iconOptions.map((iconName) => (
+                    <option key={iconName} value={iconName}>{iconName}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-2">
+              <label className="grid gap-2 text-sm font-medium text-slate-700">
                 GitHub URL
-                <input name="github" value={formState.github} onChange={handleFormChange} required className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                <input name="githubUrl" value={formState.githubUrl} onChange={handleFormChange} required className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+              </label>
+              <label className="grid gap-2 text-sm font-medium text-slate-700">
+                Status
+                <select name="status" value={formState.status} onChange={handleFormChange} className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">
+                  <option value="New">New</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
               </label>
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
               <label className="grid gap-2 text-sm font-medium text-slate-700">
                 Live Demo URL
-                <input name="liveDemo" value={formState.liveDemo} onChange={handleFormChange} required className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                <input name="liveUrl" value={formState.liveUrl} onChange={handleFormChange} required className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
               </label>
               <label className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
                 <span className="text-sm font-medium text-slate-700">Featured project</span>
@@ -355,17 +389,6 @@ export default function AdminDashboard() {
                   <input name="featured" type="checkbox" checked={formState.featured} onChange={handleFormChange} className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" />
                   <span className="text-sm text-slate-600">Highlight this project</span>
                 </div>
-              </label>
-            </div>
-
-            <div className="grid gap-6 xl:grid-cols-2">
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                Thumbnail Image
-                <input name="thumbnail" type="file" accept="image/*" onChange={handleFormChange} className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none file:rounded-full file:border-0 file:bg-[#eff6ff] file:px-4 file:py-2" />
-              </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                Gallery Images
-                <input name="images" type="file" accept="image/*" multiple onChange={handleFormChange} className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none file:rounded-full file:border-0 file:bg-[#eff6ff] file:px-4 file:py-2" />
               </label>
             </div>
 
@@ -385,11 +408,11 @@ export default function AdminDashboard() {
               <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-4 py-4 font-semibold text-slate-700">Image</th>
+                    <th className="px-4 py-4 font-semibold text-slate-700">Icon</th>
                     <th className="px-4 py-4 font-semibold text-slate-700">Title</th>
                     <th className="px-4 py-4 font-semibold text-slate-700">Category</th>
                     <th className="px-4 py-4 font-semibold text-slate-700">Technologies</th>
-                    <th className="px-4 py-4 font-semibold text-slate-700">Created</th>
+                    <th className="px-4 py-4 font-semibold text-slate-700">Status</th>
                     <th className="px-4 py-4 font-semibold text-slate-700">Actions</th>
                   </tr>
                 </thead>
@@ -397,16 +420,18 @@ export default function AdminDashboard() {
                   {projects.map((project) => (
                     <tr key={project._id}>
                       <td className="px-4 py-4">
-                        <img src={project.image} alt={project.title} className="h-16 w-24 rounded-2xl object-cover" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-[#2563EB] text-lg">
+                          {project.icon || 'FaCode'}
+                        </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="font-semibold text-slate-900">{project.title}</div>
                       </td>
                       <td className="px-4 py-4 text-slate-600">{project.category}</td>
                       <td className="px-4 py-4 text-slate-600">
-                        {project.technologies.join(', ')}
+                        {Array.isArray(project.technologies) ? project.technologies.join(', ') : ''}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">{new Date(project.createdAt).toLocaleDateString()}</td>
+                      <td className="px-4 py-4 text-slate-600">{project.featured ? 'Featured' : project.status || 'New'}</td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-2">
                           <button onClick={() => handleEdit(project)} className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-primary hover:text-primary">

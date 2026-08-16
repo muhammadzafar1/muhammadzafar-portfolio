@@ -6,9 +6,13 @@ const projectSchema = new mongoose.Schema({
   image: { type: String, default: '' },
   images: [{ type: String }],
   technologies: [{ type: String, required: true }],
-  github: { type: String, required: true },
-  liveDemo: { type: String, required: true },
-  category: { type: String, required: true },
+  github: { type: String, default: '' },
+  githubUrl: { type: String, default: '' },
+  liveDemo: { type: String, default: '' },
+  liveUrl: { type: String, default: '' },
+  category: { type: String, default: 'Other', trim: true },
+  icon: { type: String, default: 'FaCode' },
+  status: { type: String, default: 'New' },
   featured: { type: Boolean, default: false }
 }, { timestamps: true })
 

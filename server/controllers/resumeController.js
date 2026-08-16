@@ -1,23 +1,9 @@
 import Resume from '../models/Resume.js'
-import fs from 'fs'
 import path from 'path'
+import fs from 'fs'
 
 function getCurrentResume() {
   return Resume.findOne().sort({ uploadedAt: -1 })
-}
-
-function deleteResumeFile(fileUrl) {
-  if (!fileUrl) return
-  try {
-    const filename = fileUrl.split('/uploads/resume/').pop()
-    if (!filename) return
-    const filePath = path.join(process.cwd(), 'uploads', 'resume', filename)
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
-    }
-  } catch (error) {
-    console.error('Error deleting resume file:', error.message)
-  }
 }
 
 export async function getResume(req, res) {
@@ -26,6 +12,23 @@ export async function getResume(req, res) {
     if (!resume) {
       return res.status(404).json({ message: 'Resume not available' })
     }
+
+    if (req.path === '/download' || req.originalUrl.endsWith('/download')) {
+      const downloadUrl = resume.fileUrl
+      if (!downloadUrl) {
+        return res.status(404).json({ message: 'Resume not available' })
+      }
+
+      const relativePath = downloadUrl.startsWith('http') ? new URL(downloadUrl).pathname : downloadUrl
+      const safePath = path.join(process.cwd(), relativePath.replace(/^\//, ''))
+
+      if (!fs.existsSync(safePath)) {
+        return res.status(404).json({ message: 'Resume file not found' })
+      }
+
+      return res.download(safePath, resume.fileName || 'resume.pdf')
+    }
+
     res.json(resume)
   } catch (error) {
     res.status(500).json({ message: 'Server error fetching resume' })
@@ -37,10 +40,13 @@ export async function uploadResume(req, res) {
     if (!req.file) {
       return res.status(400).json({ message: 'Resume file is required' })
     }
-
     const currentResume = await getCurrentResume()
     if (currentResume) {
-      deleteResumeFile(currentResume.fileUrl)
+      // delete previous local file if present
+      if (currentResume.fileUrl && currentResume.fileUrl.startsWith('/uploads/resume/')) {
+        const p = path.join(process.cwd(), currentResume.fileUrl.replace(/^\//, ''))
+        try { if (fs.existsSync(p)) fs.unlinkSync(p) } catch (err) { console.error('Failed deleting old resume', err.message) }
+      }
       await currentResume.deleteOne()
     }
 
@@ -65,10 +71,12 @@ export async function replaceResume(req, res) {
     if (!req.file) {
       return res.status(400).json({ message: 'Resume file is required' })
     }
-
     const currentResume = await getCurrentResume()
     if (currentResume) {
-      deleteResumeFile(currentResume.fileUrl)
+      if (currentResume.fileUrl && currentResume.fileUrl.startsWith('/uploads/resume/')) {
+        const p = path.join(process.cwd(), currentResume.fileUrl.replace(/^\//, ''))
+        try { if (fs.existsSync(p)) fs.unlinkSync(p) } catch (err) { console.error('Failed deleting old resume', err.message) }
+      }
     }
 
     const fileUrl = `${req.protocol}://${req.get('host')}/uploads/resume/${req.file.filename}`
@@ -93,8 +101,10 @@ export async function deleteResume(req, res) {
     if (!currentResume) {
       return res.status(404).json({ message: 'Resume not available' })
     }
-
-    deleteResumeFile(currentResume.fileUrl)
+    if (currentResume.fileUrl && currentResume.fileUrl.startsWith('/uploads/resume/')) {
+      const p = path.join(process.cwd(), currentResume.fileUrl.replace(/^\//, ''))
+      try { if (fs.existsSync(p)) fs.unlinkSync(p) } catch (err) { console.error('Failed deleting resume', err.message) }
+    }
     await currentResume.deleteOne()
     res.json({ message: 'Resume deleted successfully' })
   } catch (error) {

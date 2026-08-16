@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Muhammad Zafar favicon">
+  <rect width="64" height="64" rx="18" fill="#0f172a"/>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#111827"/>
+  <path d="M14 46V18h8l10 17 10-17h8v28h-7V27l-11 18-11-18v19z" fill="#ffffff"/>
+  <path d="M42 18h8l-10 17 10 11v-28z" fill="#38bdf8" opacity="0.9"/>
+</svg>

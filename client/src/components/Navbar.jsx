@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FiMenu, FiX, FiDownload } from 'react-icons/fi'
-import { fetchResume } from '../services/api.js'
+import { downloadResume, fetchResume } from '../services/api.js'
 import heroImage from '../assets/images/logo.png'
 
 const navigation = [
@@ -21,6 +21,29 @@ export default function Navbar() {
       .then((response) => setResume(response.data))
       .catch(() => setResume(null))
   }, [])
+
+  const handleDownloadResume = async () => {
+    if (!resume?.fileUrl) return
+
+    try {
+      const response = await downloadResume(resume.fileUrl)
+      if (response?.ok) {
+        return
+      }
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = resume.fileName || 'resume.pdf'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Resume download failed:', error)
+    }
+  }
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-20 border-b border-slate-200/80 bg-white">
@@ -48,15 +71,13 @@ export default function Navbar() {
             Admin
           </a>
           {resume?.fileUrl ? (
-            <a
-              href={resume.fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              download
+            <button
+              type="button"
+              onClick={handleDownloadResume}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90"
             >
               <FiDownload /> Download CV
-            </a>
+            </button>
           ) : (
             <button
               disabled
@@ -93,15 +114,13 @@ export default function Navbar() {
                 Admin
               </a>
               {resume?.fileUrl ? (
-                <a
-                  href={resume.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
+                <button
+                  type="button"
+                  onClick={handleDownloadResume}
                   className="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white"
                 >
                   <FiDownload /> Download CV
-                </a>
+                </button>
               ) : (
                 <button disabled className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400">
                   <FiDownload /> No Resume Available

@@ -1,4 +1,6 @@
 import Project from '../models/Project.js'
+import fs from 'fs'
+import path from 'path'
 
 const parseTechnologies = (input) => {
   if (!input) return []
@@ -26,12 +28,19 @@ export async function getProjectById(req, res) {
 }
 
 export async function createProject(req, res) {
-  const { title, description, technologies, github, liveDemo, category, featured } = req.body
+  const { title, description, technologies, github, liveDemo, githubUrl, liveUrl, category, featured, icon, status } = req.body
   const thumbnail = req.files?.thumbnail?.[0]
   const galleryFiles = req.files?.images || []
 
-  const image = thumbnail ? `${req.protocol}://${req.get('host')}/uploads/projects/${thumbnail.filename}` : ''
-  const images = galleryFiles.map((file) => `${req.protocol}://${req.get('host')}/uploads/projects/${file.filename}`)
+  let image = ''
+  if (thumbnail && thumbnail.filename) {
+    image = `/uploads/projects/${thumbnail.filename}`
+  }
+
+  const images = galleryFiles.map((file) => (file && file.filename ? `/uploads/projects/${file.filename}` : '')).filter(Boolean)
+
+  const normalizedGithub = githubUrl || github || ''
+  const normalizedLiveUrl = liveUrl || liveDemo || ''
 
   const project = await Project.create({
     title,
@@ -39,9 +48,13 @@ export async function createProject(req, res) {
     image,
     images,
     technologies: parseTechnologies(technologies),
-    github,
-    liveDemo,
+    github: normalizedGithub,
+    githubUrl: normalizedGithub,
+    liveDemo: normalizedLiveUrl,
+    liveUrl: normalizedLiveUrl,
     category,
+    icon: icon || 'FaCode',
+    status: status || 'New',
     featured: featured === 'true' || featured === true
   })
 
@@ -54,26 +67,44 @@ export async function updateProject(req, res) {
     return res.status(404).json({ message: 'Project not found' })
   }
 
-  const { title, description, technologies, github, liveDemo, category, featured } = req.body
+  const { title, description, technologies, github, liveDemo, githubUrl, liveUrl, category, featured, icon, status } = req.body
   const thumbnail = req.files?.thumbnail?.[0]
   const galleryFiles = req.files?.images || []
 
   project.title = title || project.title
   project.description = description || project.description
   project.technologies = technologies ? parseTechnologies(technologies) : project.technologies
-  project.github = github || project.github
-  project.liveDemo = liveDemo || project.liveDemo
+
+  const nextGithubUrl = githubUrl || github || project.githubUrl || project.github || ''
+  const nextLiveUrl = liveUrl || liveDemo || project.liveUrl || project.liveDemo || ''
+
+  project.github = nextGithubUrl
+  project.githubUrl = nextGithubUrl
+  project.liveDemo = nextLiveUrl
+  project.liveUrl = nextLiveUrl
   project.category = category || project.category
+  project.icon = icon || project.icon || 'FaCode'
+  project.status = status || project.status || 'New'
   if (featured !== undefined) {
     project.featured = featured === 'true' || featured === true
   }
 
-  if (thumbnail) {
-    project.image = `${req.protocol}://${req.get('host')}/uploads/projects/${thumbnail.filename}`
+  if (thumbnail && thumbnail.filename) {
+    const newPath = `/uploads/projects/${thumbnail.filename}`
+    const oldPath = project.image
+    project.image = newPath
+    if (oldPath && oldPath.startsWith('/uploads/projects/')) {
+      const oldFile = path.join(process.cwd(), oldPath.replace(/^\//, ''))
+      try {
+        if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile)
+      } catch (err) {
+        console.error('Error deleting old thumbnail:', err.message)
+      }
+    }
   }
 
   if (galleryFiles.length > 0) {
-    project.images = galleryFiles.map((file) => `${req.protocol}://${req.get('host')}/uploads/projects/${file.filename}`)
+    project.images = galleryFiles.map((file) => (file && file.filename ? `/uploads/projects/${file.filename}` : '')).filter(Boolean)
   }
 
   await project.save()
@@ -85,6 +116,24 @@ export async function deleteProject(req, res) {
   if (!project) {
     return res.status(404).json({ message: 'Project not found' })
   }
+  // delete local files if present
+  try {
+    if (project.image && project.image.startsWith('/uploads/projects/')) {
+      const filePath = path.join(process.cwd(), project.image.replace(/^\//, ''))
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+    }
+    if (Array.isArray(project.images)) {
+      for (const img of project.images) {
+        if (img && img.startsWith('/uploads/projects/')) {
+          const filePath = path.join(process.cwd(), img.replace(/^\//, ''))
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error deleting project files:', err.message)
+  }
+
   await project.deleteOne()
   res.json({ message: 'Project removed' })
 }

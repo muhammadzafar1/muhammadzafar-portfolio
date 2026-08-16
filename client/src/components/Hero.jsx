@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FaGithub, FaLinkedin, FaWhatsapp, FaEnvelope } from 'react-icons/fa'
 import { useHero } from '../hooks/useHero'
-import { fetchResume } from '../services/api.js'
+import { downloadResume, fetchResume } from '../services/api.js'
 import heroImage from '../assets/images/hero.png'
 
 const socialLinks = [
@@ -72,6 +72,29 @@ export default function Hero() {
       .catch(() => setResume(null))
   }, [])
 
+  const handleDownloadResume = async () => {
+    if (!resume?.fileUrl) return
+
+    try {
+      const response = await downloadResume(resume.fileUrl)
+      if (response?.ok) {
+        return
+      }
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = resume.fileName || 'resume.pdf'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Resume download failed:', error)
+    }
+  }
+
   return (
     <section id="home" className="relative w-full overflow-hidden bg-white min-h-[calc(100vh-80px)] scroll-mt-24">
       <div className="mx-auto flex h-full max-w-7xl flex-col justify-center gap-12 px-6 py-8 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-10">
@@ -98,9 +121,9 @@ export default function Hero() {
               View My Work
             </a>
             {resume?.fileUrl ? (
-              <a href={resume.fileUrl} target="_blank" rel="noreferrer" download className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-8 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50">
+              <button type="button" onClick={handleDownloadResume} className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-8 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50">
                 Download CV
-              </a>
+              </button>
             ) : (
               <button disabled className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-8 text-sm font-semibold text-slate-400 shadow-sm">
                 No Resume Available
