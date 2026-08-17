@@ -76,20 +76,7 @@ export default function Hero() {
     if (!resume?.fileUrl) return
 
     try {
-      const response = await downloadResume(resume.fileUrl)
-      if (response?.ok) {
-        return
-      }
-
-      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = resume.fileName || 'resume.pdf'
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
+      await downloadResume(resume.fileUrl, resume.fileName || 'resume.pdf')
     } catch (error) {
       console.error('Resume download failed:', error)
     }
@@ -109,7 +96,7 @@ export default function Hero() {
             <h1 className="mt-4 text-5xl font-semibold leading-tight text-slate-900 sm:text-6xl">Muhammad Zafar</h1>
             <p className="mt-3 text-xl font-medium leading-normal text-slate-900">Full Stack Web Developer</p>
             <p className="mt-6 max-w-xl text-base leading-8 text-slate-600">
-              I build modern, responsive and scalable web applications using MERN stack and other cutting-edge technologies.
+              I transform ideas into modern, scalable, and high-performance web applications with clean code, intuitive interfaces, and powerful backend solutions.
             </p>
           </div>
 

@@ -9,18 +9,17 @@ export default function About() {
          
         </div>
 
-        <h2 className="mb-8 text-2xl font-bold text-slate-900">Biography</h2>
+        <h2 className="mb-8 text-2xl font-bold text-slate-900">My Journey</h2>
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h3 className="text-xl font-semibold leading-8 text-slate-900">
-              I am a passionate Full Stack Web Developer specializing in the MERN Stack. I create modern, responsive, and
-              scalable web applications with clean code, intuitive user interfaces, and efficient backend systems.
+            <h3 className="text-xl font-semibold leading-8 text-slate-900 pt-4">
+             I am a Full Stack Web Developer with a strong focus on building modern, responsive, and user-friendly web applications. I work across both frontend and backend development, using HTML5, CSS3, JavaScript, React.js, Next.js, and Tailwind CSS to create engaging user interfaces, while leveraging Node.js and Express.js to build scalable backend applications and REST APIs. I also have hands-on experience with MongoDB, MongoDB Atlas, and SQL/MySQL for database management. I enjoy transforming ideas into complete, functional web solutions and continuously improving my skills by building real-world projects with clean, maintainable, and efficient code.
             </h3>
             <a
               href="#contact"
-              className="mt-8 inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-8 text-sm font-semibold text-slate-900 shadow-soft hover:-translate-y-0.5 hover:bg-slate-50"
+              className= "bg-blue-700 mt-8 inline-flex h-14 items-center justify-center rounded-full border border-slate-200  px-8 text-sm font-semibold text-white shadow-soft hover:-translate-y-0.5 hover:bg-slate-50  hover:text-blue-700"
             >
-              Read More
+            Contact
             </a>
           </motion.div>
 

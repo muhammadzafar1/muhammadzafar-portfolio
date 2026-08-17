@@ -89,37 +89,52 @@ export default function Projects() {
           <div className="rounded-[16px] border border-red-200 bg-red-50 p-10 text-center text-red-700 shadow-soft">{error}</div>
         ) : (
           <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProjects.map((project) => {
+            {filteredProjects.map((project, index) => {
               const IconComponent = iconMap[project.icon] || FaCode
               const liveUrl = project.liveUrl || project.liveDemo || ''
               const githubUrl = project.githubUrl || project.github || ''
               const statusLabel = project.featured ? 'Featured' : project.status || 'New'
+              const isBlueCard = index % 2 === 0
 
               return (
                 <motion.article
                   key={project._id}
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -6 }}
+                  whileHover={{ y: -5 }}
                   viewport={{ once: true }}
-                  className="group flex h-full flex-col rounded-[16px] border border-[#E5E7EB] bg-white p-0 shadow-soft transition duration-300 hover:shadow-lg hover:shadow-[#2563EB]/10"
+                  className={`group flex h-full flex-col rounded-[16px] p-0 transition-all duration-300 ${
+                    isBlueCard
+                      ? 'border border-[rgba(37,99,235,0.20)] bg-gradient-to-br from-white/98 via-[#f8fbff] to-[#eff6ff]/95 shadow-[0_12px_40px_rgba(37,99,235,0.10)] hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)]'
+                      : 'border border-[rgba(124,58,237,0.20)] bg-gradient-to-br from-white/98 via-[#ffffff] to-[#f5f3ff]/95 shadow-[0_12px_40px_rgba(124,58,237,0.10)] hover:shadow-[0_20px_50px_rgba(124,58,237,0.15)]'
+                  }`}
                 >
                   <div className="flex h-full flex-col p-6">
                     <div className="mb-5 flex items-center justify-between">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-[#2563EB] shadow-sm transition duration-300 group-hover:scale-105 group-hover:bg-[#eff6ff]">
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl shadow-sm transition duration-300 group-hover:scale-105 ${
+                        isBlueCard ? 'bg-[rgba(37,99,235,0.08)] text-[#2563EB]' : 'bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
+                      }`}>
                         <IconComponent className="text-xl" />
                       </div>
                       <div className="flex items-center gap-2">
                         <span
                           className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
                             statusLabel === 'Featured'
-                              ? 'bg-[#eff6ff] text-[#1d4ed8]'
-                              : 'bg-[#ecfeff] text-[#0f766e]'
+                              ? isBlueCard
+                                ? 'bg-[rgba(6,182,212,0.08)] text-[#0891B2]'
+                                : 'bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
+                              : isBlueCard
+                                ? 'bg-[rgba(6,182,212,0.08)] text-[#0891B2]'
+                                : 'bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
                           }`}
                         >
                           {statusLabel}
                         </span>
-                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
+                          isBlueCard
+                            ? 'border border-[rgba(37,99,235,0.10)] bg-[rgba(37,99,235,0.08)] text-[#2563EB]'
+                            : 'border border-[rgba(124,58,237,0.10)] bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
+                        }`}>
                           {(project.category || 'Other')}
                         </span>
                       </div>
@@ -130,15 +145,21 @@ export default function Projects() {
                       <p className="text-sm leading-7 text-slate-600">{project.description}</p>
                     </div>
 
-                    <div className="my-5 h-px w-full bg-[#E5E7EB]" />
+                    <div className={`my-5 h-px w-full ${isBlueCard ? 'bg-[rgba(37,99,235,0.12)]' : 'bg-[rgba(124,58,237,0.12)]'}`} />
 
                     <div className="mb-5">
-                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Tech Stack</p>
+                      <p className={`mb-3 text-[10px] font-bold uppercase tracking-[0.2em] ${isBlueCard ? 'text-[#2563EB]' : 'text-[#7C3AED]'}`}>
+                        Tech Stack
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {(project.technologies || []).map((tech) => (
                           <span
                             key={`${project._id}-${tech}`}
-                            className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700"
+                            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                              isBlueCard
+                                ? 'border-[rgba(37,99,235,0.10)] bg-[rgba(37,99,235,0.08)] text-[#2563EB]'
+                                : 'border-[rgba(124,58,237,0.10)] bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
+                            }`}
                           >
                             {tech}
                           </span>
@@ -152,7 +173,11 @@ export default function Projects() {
                           href={liveUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#2563EB] px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 hover:bg-[#1d4ed8]"
+                          className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 ${
+                            isBlueCard
+                              ? 'bg-gradient-to-r from-[#2563EB] to-[#3B82F6] hover:brightness-105'
+                              : 'bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6] hover:brightness-105'
+                          }`}
                         >
                           <FaExternalLinkAlt className="text-xs" />
                           Live Demo
@@ -163,7 +188,7 @@ export default function Projects() {
                           href={githubUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-[#2563EB] hover:text-[#2563EB]"
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#DDE5F0] bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-[#2563EB] hover:text-[#2563EB]"
                         >
                           <FaGithub className="text-sm" />
                           GitHub

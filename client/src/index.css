@@ -12,8 +12,76 @@ html {
 }
 
 body {
-  background: #ffffff;
+  margin: 0;
+  min-height: 100vh;
+  background: #f8fbff;
   color: #111827;
+  overflow-x: hidden;
+}
+
+#root {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+  overflow-x: hidden;
+}
+
+#root::before,
+#root::after {
+  content: '';
+  position: fixed;
+  inset: -10% -6%;
+  pointer-events: none;
+  z-index: -1;
+  will-change: transform, opacity;
+}
+
+#root::before {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(96, 165, 250, 0.16), transparent 22%),
+    radial-gradient(circle at 75% 16%, rgba(168, 85, 247, 0.12), transparent 20%),
+    radial-gradient(circle at 57% 74%, rgba(191, 219, 254, 0.18), transparent 24%),
+    radial-gradient(circle at 82% 70%, rgba(168, 85, 247, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(244, 249, 255, 0.95) 100%);
+  animation: ambientDrift 58s ease-in-out infinite alternate;
+}
+
+#root::after {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(59, 130, 246, 0.14) 0 1.2px, transparent 1.7px) 0 0 / 220px 200px,
+    radial-gradient(circle at 68% 72%, rgba(96, 165, 250, 0.12) 0 1.1px, transparent 1.6px) 0 0 / 260px 220px,
+    radial-gradient(circle at 40% 44%, rgba(168, 85, 247, 0.06) 0 1.8px, transparent 2.6px) 0 0 / 180px 170px,
+    radial-gradient(circle at 28% 24%, rgba(191, 219, 254, 0.12), transparent 26%),
+    radial-gradient(circle at 76% 82%, rgba(191, 219, 254, 0.1), transparent 30%),
+    linear-gradient(115deg, transparent 0%, rgba(191, 219, 254, 0.08) 30%, rgba(255, 255, 255, 0) 48%, rgba(216, 180, 254, 0.07) 74%, transparent 100%);
+  background-blend-mode: screen, screen, screen, normal, normal, normal;
+  opacity: 0.85;
+  animation: waveFloat 72s ease-in-out infinite alternate;
+}
+
+@keyframes ambientDrift {
+  0% {
+    transform: translate3d(-1.2%, 0, 0) scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(1.5%, 1.5%, 0) scale(1.03);
+    opacity: 1;
+  }
+}
+
+@keyframes waveFloat {
+  0% {
+    transform: translate3d(-0.8%, -0.6%, 0) scale(1) rotate(0deg);
+    opacity: 0.68;
+  }
+  50% {
+    opacity: 0.84;
+  }
+  100% {
+    transform: translate3d(1.8%, 1%, 0) scale(1.04) rotate(0.9deg);
+    opacity: 0.78;
+  }
 }
 
 ::selection {
@@ -24,4 +92,36 @@ body {
 button,
 a {
   transition: all 0.25s ease;
+}
+
+@media (max-width: 768px) {
+  #root::before,
+  #root::after {
+    inset: -8% -6%;
+  }
+
+  #root::before {
+    background:
+      radial-gradient(circle at 18% 18%, rgba(96, 165, 250, 0.2), transparent 20%),
+      radial-gradient(circle at 72% 22%, rgba(168, 85, 247, 0.15), transparent 18%),
+      radial-gradient(circle at 58% 72%, rgba(191, 219, 254, 0.2), transparent 22%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 249, 255, 0.96) 100%);
+  }
+
+  #root::after {
+    background:
+      radial-gradient(circle at 12% 18%, rgba(59, 130, 246, 0.14) 0 1.1px, transparent 1.5px) 0 0 / 180px 170px,
+      radial-gradient(circle at 68% 70%, rgba(96, 165, 250, 0.1) 0 1px, transparent 1.4px) 0 0 / 220px 200px,
+      radial-gradient(circle at 36% 46%, rgba(168, 85, 247, 0.06) 0 1.5px, transparent 2.2px) 0 0 / 150px 140px,
+      linear-gradient(115deg, transparent 0%, rgba(191, 219, 254, 0.12) 28%, rgba(255, 255, 255, 0) 48%, rgba(216, 180, 254, 0.08) 76%, transparent 100%);
+    opacity: 0.7;
+    animation-duration: 70s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root::before,
+  #root::after {
+    animation: none !important;
+  }
 }

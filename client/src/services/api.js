@@ -27,27 +27,57 @@ export const getResumeDownloadUrl = (resumeFileUrl) => {
   return `${origin}${relativeUrl}`
 }
 
+const isMobileBrowser = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 export const fetchHero = () => api.get('/hero')
 export const fetchProjects = () => api.get('/projects')
 export const fetchSkills = () => api.get('/skills')
 export const fetchResume = () => api.get('/resume')
-export const downloadResume = (resumeFileUrl) => {
+export const downloadResume = async (resumeFileUrl, fileName = 'resume.pdf') => {
   const directUrl = getResumeDownloadUrl(resumeFileUrl)
 
-  if (directUrl) {
-    return new Promise((resolve) => {
-      const link = document.createElement('a')
-      link.href = directUrl
-      link.rel = 'noopener noreferrer'
-      link.setAttribute('download', '')
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      resolve({ ok: true, url: directUrl })
-    })
+  if (!directUrl) {
+    return api.get('/resume/download', { responseType: 'blob' })
   }
 
-  return api.get('/resume/download', { responseType: 'blob' })
+  if (isMobileBrowser()) {
+    const newTab = window.open(directUrl, '_blank', 'noopener,noreferrer')
+    if (newTab) {
+      return { ok: true, url: directUrl, openedInNewTab: true }
+    }
+  }
+
+  try {
+    const response = await fetch(directUrl, { credentials: 'include' })
+
+    if (!response.ok) {
+      throw new Error(`Resume download failed with status ${response.status}`)
+    }
+
+    const blob = await response.blob()
+    const blobUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = fileName
+    link.rel = 'noopener noreferrer'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000)
+
+    return { ok: true, url: directUrl }
+  } catch (error) {
+    const link = document.createElement('a')
+    link.href = directUrl
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+
+    return { ok: true, url: directUrl, fallback: true }
+  }
 }
 export const uploadResume = (payload, config) => api.post('/resume/upload', payload, config)
 export const replaceResume = (payload, config) => api.put('/resume/replace', payload, config)
