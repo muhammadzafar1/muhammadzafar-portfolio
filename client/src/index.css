@@ -125,3 +125,176 @@ a {
     animation: none !important;
   }
 }
+
+/* === Skills card styles (visual only) === */
+.skill-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  box-shadow: 0 10px 35px rgba(37, 99, 235, 0.08);
+  transition: all 300ms ease;
+  will-change: transform;
+}
+.skill-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.14);
+  border-color: #BFDBFE;
+}
+
+.skill-icon {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #EFF6FF, #F8FAFC);
+  border: 1px solid #DBEAFE;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+}
+
+.skill-name {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+.skill-category {
+  color: #64748B;
+  letter-spacing: 0.25em;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.skill-percent {
+  background: linear-gradient(135deg, #EFF6FF, #EEF2FF);
+  color: #3730A3;
+  border-radius: 9999px;
+  font-weight: 600;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skill-proficiency {
+  color: #64748B;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.skill-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: #E2E8F0;
+  overflow: hidden;
+}
+.skill-progress {
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #2563EB, #4F46E5);
+}
+
+/* === Global animated CSS-only background (behind entire app) === */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  will-change: transform;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.10), transparent 30%),
+    radial-gradient(circle at 90% 15%, rgba(99, 102, 241, 0.08), transparent 30%),
+    radial-gradient(circle at 50% 90%, rgba(139, 92, 246, 0.08), transparent 35%),
+    linear-gradient(135deg, #ffffff 0%, #f8fbff 45%, #ffffff 100%);
+  background-repeat: no-repeat;
+  opacity: 1;
+  animation: portfolioBackgroundMotion 40s ease-in-out infinite alternate;
+}
+
+/* subtle dotted particles layer */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    radial-gradient(circle, rgba(59,130,246,0.08) 1px, transparent 1.5px);
+  background-size: 90px 90px;
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  transform: translateZ(0);
+  animation: portfolioBackgroundMotion 45s ease-in-out infinite alternate-reverse;
+}
+
+/* soft flowing wave pseudo elements */
+html::before,
+html::after {
+  content: '';
+  position: fixed;
+  pointer-events: none;
+  z-index: -2;
+  border-radius: 50%;
+  filter: blur(35px);
+  opacity: 0.15;
+}
+
+html::before {
+  width: 720px;
+  height: 720px;
+  left: -8%;
+  top: 10%;
+  background: linear-gradient(120deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08), transparent);
+  animation: portfolioBackgroundMotion 40s ease-in-out infinite alternate;
+}
+
+html::after {
+  width: 840px;
+  height: 840px;
+  right: -10%;
+  bottom: 5%;
+  background: linear-gradient(220deg, rgba(168,85,247,0.10), rgba(99,102,241,0.06), transparent);
+  animation: portfolioBackgroundMotion 42s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes portfolioBackgroundMotion {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.025) translate3d(10px, -8px, 0);
+  }
+  100% {
+    transform: scale(1) translate3d(-8px, 8px, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  body::before,
+  body::after,
+  html::before,
+  html::after {
+    animation-duration: 50s;
+    transform: translate3d(0,0,0);
+  }
+  html::before,
+  html::after {
+    filter: blur(22px);
+    opacity: 0.12;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after,
+  html::before,
+  html::after {
+    animation: none !important;
+  }
+}

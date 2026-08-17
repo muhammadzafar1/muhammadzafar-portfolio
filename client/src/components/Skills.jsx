@@ -65,11 +65,11 @@ export default function Skills() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.45, delay: index * 0.05, ease: 'easeInOut' }}
               variants={cardVariant}
-              className="group overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.08)] backdrop-blur-sm transition hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/90"
+              className="skill-card group p-6"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-900 ring-1 ring-slate-200">
+                  <div className="skill-icon">
                     {skill.icon ? (
                       <img src={skill.icon} alt={skill.label} className="h-8 w-8 object-contain" />
                     ) : (
@@ -77,22 +77,18 @@ export default function Skills() {
                     )}
                   </div>
                   <div>
-                    <p className="text-base font-semibold text-slate-900">{skill.label}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500">{skill.category || 'Technology'}</p>
+                    <p className="skill-name">{skill.label}</p>
+                    <p className="skill-category mt-1">{skill.category || 'Technology'}</p>
                   </div>
                 </div>
-                <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
-                  {skill.progress}%
-                </div>
+                <div className="skill-percent">{skill.progress}%</div>
               </div>
 
               <div className="mt-6">
-                <div className="mb-3 text-xs uppercase tracking-[0.24em] text-slate-500">
-                  Proficiency
-                </div>
-                <div className="h-2 rounded-full bg-slate-200">
+                <div className="skill-proficiency mb-3">Proficiency</div>
+                <div className="skill-track">
                   <div
-                    className="h-2 rounded-full bg-gradient-to-r from-primary to-secondary"
+                    className="skill-progress"
                     style={{ width: `${skill.progress}%` }}
                   />
                 </div>

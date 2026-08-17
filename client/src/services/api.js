@@ -36,23 +36,39 @@ export const fetchResume = () => api.get('/resume')
 export const downloadResume = async (resumeFileUrl, fileName = 'resume.pdf') => {
   const directUrl = getResumeDownloadUrl(resumeFileUrl)
 
+  // If there's no direct URL, request the server download endpoint and download the blob
   if (!directUrl) {
-    return api.get('/resume/download', { responseType: 'blob' })
-  }
-
-  if (isMobileBrowser()) {
-    const newTab = window.open(directUrl, '_blank', 'noopener,noreferrer')
-    if (newTab) {
-      return { ok: true, url: directUrl, openedInNewTab: true }
+    try {
+      const response = await api.get('/resume/download', { responseType: 'blob' })
+      const blob = response.data
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = fileName
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000)
+      return { ok: true, url: '/api/resume/download' }
+    } catch (err) {
+      return Promise.reject(err)
     }
   }
 
+  // For external or cross-origin URLs, open in new tab for broader device support
   try {
-    const response = await fetch(directUrl, { credentials: 'include' })
+    const directOrigin = new URL(directUrl).origin
+    const sameOrigin = directOrigin === window.location.origin
 
-    if (!response.ok) {
-      throw new Error(`Resume download failed with status ${response.status}`)
+    if (isMobileBrowser() || !sameOrigin) {
+      const newTab = window.open(directUrl, '_blank', 'noopener,noreferrer')
+      if (newTab) return { ok: true, url: directUrl, openedInNewTab: true }
+      // fall through to try fetch if popup blocked
     }
+
+    const response = await fetch(directUrl, { credentials: sameOrigin ? 'include' : 'omit' })
+    if (!response.ok) throw new Error(`Resume download failed with status ${response.status}`)
 
     const blob = await response.blob()
     const blobUrl = window.URL.createObjectURL(blob)
@@ -67,16 +83,10 @@ export const downloadResume = async (resumeFileUrl, fileName = 'resume.pdf') => 
 
     return { ok: true, url: directUrl }
   } catch (error) {
-    const link = document.createElement('a')
-    link.href = directUrl
-    link.target = '_blank'
-    link.rel = 'noopener noreferrer'
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-
-    return { ok: true, url: directUrl, fallback: true }
+    // Last resort: open in new tab so user can manually save
+    const newTab = window.open(directUrl, '_blank', 'noopener,noreferrer')
+    if (newTab) return { ok: true, url: directUrl, fallback: true }
+    return Promise.reject(error)
   }
 }
 export const uploadResume = (payload, config) => api.post('/resume/upload', payload, config)
