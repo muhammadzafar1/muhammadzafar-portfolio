@@ -6,6 +6,20 @@ function getCurrentResume() {
   return Resume.findOne().sort({ uploadedAt: -1 })
 }
 
+function resolveFileSystemPath(fileUrl) {
+  if (!fileUrl) return null
+
+  const pathname = fileUrl.startsWith('http') ? new URL(fileUrl).pathname : fileUrl
+  const cleanPath = pathname.replace(/^\/+/, '')
+
+  if (!cleanPath) return null
+  return path.join(process.cwd(), cleanPath)
+}
+
+function buildResumeFileUrl(filename) {
+  return `/uploads/resume/${filename}`
+}
+
 export async function getResume(req, res) {
   try {
     const resume = await getCurrentResume()
@@ -19,10 +33,8 @@ export async function getResume(req, res) {
         return res.status(404).json({ message: 'Resume not available' })
       }
 
-      const relativePath = downloadUrl.startsWith('http') ? new URL(downloadUrl).pathname : downloadUrl
-      const safePath = path.join(process.cwd(), relativePath.replace(/^\//, ''))
-
-      if (!fs.existsSync(safePath)) {
+      const safePath = resolveFileSystemPath(downloadUrl)
+      if (!safePath || !fs.existsSync(safePath)) {
         return res.status(404).json({ message: 'Resume file not found' })
       }
 
@@ -40,17 +52,21 @@ export async function uploadResume(req, res) {
     if (!req.file) {
       return res.status(400).json({ message: 'Resume file is required' })
     }
+
     const currentResume = await getCurrentResume()
     if (currentResume) {
-      // delete previous local file if present
-      if (currentResume.fileUrl && currentResume.fileUrl.startsWith('/uploads/resume/')) {
-        const p = path.join(process.cwd(), currentResume.fileUrl.replace(/^\//, ''))
-        try { if (fs.existsSync(p)) fs.unlinkSync(p) } catch (err) { console.error('Failed deleting old resume', err.message) }
+      const previousPath = resolveFileSystemPath(currentResume.fileUrl)
+      if (previousPath && fs.existsSync(previousPath)) {
+        try {
+          fs.unlinkSync(previousPath)
+        } catch (err) {
+          console.error('Failed deleting old resume', err.message)
+        }
       }
       await currentResume.deleteOne()
     }
 
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/resume/${req.file.filename}`
+    const fileUrl = buildResumeFileUrl(req.file.filename)
     const resumeData = {
       fileName: req.file.originalname,
       fileUrl,
@@ -71,15 +87,20 @@ export async function replaceResume(req, res) {
     if (!req.file) {
       return res.status(400).json({ message: 'Resume file is required' })
     }
+
     const currentResume = await getCurrentResume()
     if (currentResume) {
-      if (currentResume.fileUrl && currentResume.fileUrl.startsWith('/uploads/resume/')) {
-        const p = path.join(process.cwd(), currentResume.fileUrl.replace(/^\//, ''))
-        try { if (fs.existsSync(p)) fs.unlinkSync(p) } catch (err) { console.error('Failed deleting old resume', err.message) }
+      const previousPath = resolveFileSystemPath(currentResume.fileUrl)
+      if (previousPath && fs.existsSync(previousPath)) {
+        try {
+          fs.unlinkSync(previousPath)
+        } catch (err) {
+          console.error('Failed deleting old resume', err.message)
+        }
       }
     }
 
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/resume/${req.file.filename}`
+    const fileUrl = buildResumeFileUrl(req.file.filename)
     const resumeData = {
       fileName: req.file.originalname,
       fileUrl,
@@ -101,10 +122,16 @@ export async function deleteResume(req, res) {
     if (!currentResume) {
       return res.status(404).json({ message: 'Resume not available' })
     }
-    if (currentResume.fileUrl && currentResume.fileUrl.startsWith('/uploads/resume/')) {
-      const p = path.join(process.cwd(), currentResume.fileUrl.replace(/^\//, ''))
-      try { if (fs.existsSync(p)) fs.unlinkSync(p) } catch (err) { console.error('Failed deleting resume', err.message) }
+
+    const resumePath = resolveFileSystemPath(currentResume.fileUrl)
+    if (resumePath && fs.existsSync(resumePath)) {
+      try {
+        fs.unlinkSync(resumePath)
+      } catch (err) {
+        console.error('Failed deleting resume', err.message)
+      }
     }
+
     await currentResume.deleteOne()
     res.json({ message: 'Resume deleted successfully' })
   } catch (error) {
