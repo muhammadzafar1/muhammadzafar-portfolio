@@ -26,7 +26,7 @@ export default function Navbar() {
     if (!resume?.fileUrl) return
 
     try {
-      await downloadResume(resume.fileUrl, resume.fileName || 'resume.pdf')
+      await downloadResume(resume.fileUrl, resume.fileName)
     } catch (error) {
       console.error('Resume download failed:', error)
     }

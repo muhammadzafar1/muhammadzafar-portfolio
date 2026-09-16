@@ -39,7 +39,7 @@ export const downloadResume = async (resumeFileUrl, fileName = 'resume.pdf') => 
   // If there's no direct URL, request the server download endpoint and download the blob
   if (!directUrl) {
     try {
-      const response = await api.get('/resume/download', { responseType: 'blob' })
+      const response = await api.get('/api/resume/download', { responseType: 'blob' })
       const blob = response.data
       const blobUrl = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
