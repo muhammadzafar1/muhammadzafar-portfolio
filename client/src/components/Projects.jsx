@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   FaBriefcase,
+  FaBlog,
   FaChartBar,
   FaCode,
   FaComments,
@@ -14,7 +15,6 @@ import {
   FaShoppingCart,
   FaTasks,
   FaUser,
-  FaBlog
 } from 'react-icons/fa'
 import { useProjects } from '../hooks/useProjects'
 
@@ -32,7 +32,36 @@ const iconMap = {
   FaServer,
   FaComments,
   FaBriefcase,
-  FaLaptopCode
+  FaLaptopCode,
+}
+
+const normalizeFilter = (value) => {
+  if (!value) return 'other'
+
+  return String(value)
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .trim()
+}
+
+const normalizeProjectCategories = (project) => {
+  const categories = Array.isArray(project?.categories)
+    ? project.categories
+    : Array.isArray(project?.category)
+      ? project.category
+      : [project?.category || 'Other']
+
+  return categories
+    .map((category) => {
+      const normalized = normalizeFilter(category)
+      if (normalized === 'full stack' || normalized === 'full-stack') return 'full stack'
+      if (normalized === 'nodejs' || normalized === 'node.js') return 'node.js'
+      if (normalized === 'frontend') return 'frontend'
+      if (normalized === 'backend') return 'backend'
+      if (normalized === 'react') return 'react'
+      return 'other'
+    })
+    .filter(Boolean)
 }
 
 export default function Projects() {
@@ -40,161 +69,182 @@ export default function Projects() {
   const [activeFilter, setActiveFilter] = useState('All')
 
   const filteredProjects = useMemo(() => {
-    const normalizedProjects = projects.filter((project) => project && (project.category || 'Other') !== 'All')
+    if (!Array.isArray(projects)) return []
+
+    const normalizedProjects = projects.filter((project) => project)
+
     if (activeFilter === 'All') return normalizedProjects
-    return normalizedProjects.filter((project) => (project.category || 'Other') === activeFilter)
+
+    const target = normalizeFilter(activeFilter)
+
+    return normalizedProjects.filter((project) =>
+      normalizeProjectCategories(project).includes(target),
+    )
   }, [activeFilter, projects])
 
   return (
-    <section id="projects" className="bg-white min-h-screen w-full scroll-mt-20 py-16">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mb-16 flex flex-col items-center gap-6 text-center">
-          <div className="max-w-3xl">
-            <p className="text-4xl font-bold uppercase tracking-wider text-primary sm:text-5xl">My Projects</p>
-            <h2 className="mt-4 text-lg font-semibold text-slate-600">Premium work built for modern brands</h2>
-          </div>
-          <a href="#projects" className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:text-primary">
-            View All Projects →
+    <section
+      id="projects"
+      className="w-full scroll-mt-24 bg-[#f6f7fb] py-16 sm:py-20 lg:py-24"
+      style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
+    >
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 flex flex-col items-center gap-5 text-center">
+          <h2 className="text-4xl font-extrabold tracking-[-0.05em] text-[#14172b] sm:text-5xl">
+            My Projects
+          </h2>
+          <p className="text-base text-[#6b7085] sm:text-lg">
+            Premium work built for modern brands
+          </p>
+
+          <a
+            href="#projects"
+            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#6d5ef8] to-[#8b7bff] px-6 py-3 text-sm font-bold text-white shadow-[0_18px_35px_rgba(109,94,248,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_40px_rgba(109,94,248,0.42)]"
+          >
+            View All Projects <span aria-hidden="true">→</span>
           </a>
         </div>
 
-        <div className="mb-10 flex flex-wrap gap-3">
-          {filters.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`rounded-full border px-5 py-3 text-sm font-semibold transition ${
-                activeFilter === filter
-                  ? 'border-[#2563EB] bg-[#2563EB] text-white shadow-soft'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-[#2563EB] hover:text-[#2563EB]'
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
+        <div className="mb-10 flex flex-wrap items-center justify-center gap-3">
+          {filters.map((filter) => {
+            const isActive = activeFilter === filter
+
+            return (
+              <button
+                key={filter}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setActiveFilter(filter)}
+                className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6d5ef8] focus-visible:ring-offset-2 ${
+                  isActive
+                    ? 'border-transparent bg-gradient-to-r from-[#6d5ef8] to-[#8b7bff] text-white shadow-[0_16px_30px_rgba(109,94,248,0.32)]'
+                    : 'border-[#e7e9f3] bg-white text-[#6b7085] hover:border-[#6d5ef8] hover:text-[#6d5ef8]'
+                }`}
+              >
+                {filter}
+              </button>
+            )
+          })}
         </div>
 
         {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             {[...Array(4)].map((_, index) => (
-              <div key={index} className="animate-pulse rounded-[16px] border border-slate-200 bg-white p-6 shadow-soft">
-                <div className="mb-5 h-16 w-16 rounded-xl bg-slate-100" />
-                <div className="h-5 w-3/4 rounded-full bg-slate-100" />
-                <div className="mt-4 h-4 w-full rounded-full bg-slate-100" />
-                <div className="mt-2 h-4 w-2/3 rounded-full bg-slate-100" />
+              <div
+                key={index}
+                className="animate-pulse rounded-2xl border border-[#e7e9f3] bg-white p-6 shadow-md"
+              >
+                <div className="mb-5 h-12 w-12 rounded-xl bg-slate-200" />
+                <div className="h-5 w-2/3 rounded-full bg-slate-200" />
+                <div className="mt-4 h-4 w-full rounded-full bg-slate-200" />
+                <div className="mt-2 h-4 w-5/6 rounded-full bg-slate-200" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-[16px] border border-red-200 bg-red-50 p-10 text-center text-red-700 shadow-soft">{error}</div>
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center text-red-700">
+            {error}
+          </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[#dfe3ee] bg-white/40 px-6 py-12 text-center text-sm text-[#6b7085]">
+            No projects in this category yet.
+          </div>
         ) : (
-          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             {filteredProjects.map((project, index) => {
-              const IconComponent = iconMap[project.icon] || FaCode
+              const IconComponent = project.icon && iconMap[project.icon] ? iconMap[project.icon] : FaCode
               const liveUrl = project.liveUrl || project.liveDemo || ''
               const githubUrl = project.githubUrl || project.github || ''
-              const statusLabel = project.featured ? 'Featured' : project.status || 'New'
-              const isBlueCard = index % 2 === 0
+              const statusLabel = project.featured ? 'Completed' : project.status || 'Completed'
+              const displayCategory =
+                project.category ||
+                (Array.isArray(project.categories) && project.categories[0]) ||
+                'Other'
+              const palette = index % 2 === 0
+                ? {
+                    soft: 'bg-[#eeecff] text-[#6d5ef8]',
+                    pill: 'bg-[#eeecff] text-[#6d5ef8]',
+                    border: 'border-[#e7e9f3]',
+                    button: 'bg-gradient-to-r from-[#6d5ef8] to-[#8b7bff]',
+                    tag: 'text-[#6d5ef8]',
+                  }
+                : {
+                    soft: 'bg-[#e3f8f5] text-[#17b6a7]',
+                    pill: 'bg-[#e3f8f5] text-[#17b6a7]',
+                    border: 'border-[#e7e9f3]',
+                    button: 'bg-gradient-to-r from-[#17b6a7] to-[#25c2b5]',
+                    tag: 'text-[#17b6a7]',
+                  }
 
               return (
                 <motion.article
-                  key={project._id}
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -5 }}
-                  viewport={{ once: true }}
-                  className={`group flex h-full flex-col rounded-[16px] p-0 transition-all duration-300 ${
-                    isBlueCard
-                      ? 'border border-[rgba(37,99,235,0.20)] bg-gradient-to-br from-white/98 via-[#f8fbff] to-[#eff6ff]/95 shadow-[0_12px_40px_rgba(37,99,235,0.10)] hover:shadow-[0_20px_50px_rgba(37,99,235,0.15)]'
-                      : 'border border-[rgba(124,58,237,0.20)] bg-gradient-to-br from-white/98 via-[#ffffff] to-[#f5f3ff]/95 shadow-[0_12px_40px_rgba(124,58,237,0.10)] hover:shadow-[0_20px_50px_rgba(124,58,237,0.15)]'
-                  }`}
+                  key={project._id || `${project.title}-${index}`}
+                  initial={{ opacity: 0, scale: 0.98, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  whileHover={{ y: -6 }}
+                  className="group flex h-full flex-col rounded-2xl border border-[#e7e9f3] bg-[#ffffff] p-5 shadow-md transition-all duration-200 hover:shadow-xl"
                 >
-                  <div className="flex h-full flex-col p-6">
-                    <div className="mb-5 flex items-center justify-between">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl shadow-sm transition duration-300 group-hover:scale-105 ${
-                        isBlueCard ? 'bg-[rgba(37,99,235,0.08)] text-[#2563EB]' : 'bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
-                      }`}>
-                        <IconComponent className="text-xl" />
-                      </div>
-                      <div className="flex items-center gap-2">
+                  <div className="mb-5 flex items-start justify-between gap-3">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${palette.soft}`}>
+                      <IconComponent className="h-5 w-5" aria-hidden="true" />
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${palette.pill}`}>
+                        {statusLabel}
+                      </span>
+                      <span className="rounded-full border border-[#e7e9f3] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6b7085]">
+                        {displayCategory}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-xl font-bold text-[#14172b]">{project.title}</h3>
+                    <p className="text-sm leading-6 text-[#6b7085]">{project.description}</p>
+                  </div>
+
+                  <div className="mt-5 border-t border-[#e7e9f3] pt-4">
+                    <p className={`mb-3 text-[10px] font-bold uppercase tracking-[0.22em] ${palette.tag}`}>
+                      Tech Stack
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(project.technologies || []).map((tech) => (
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                            statusLabel === 'Featured'
-                              ? isBlueCard
-                                ? 'bg-[rgba(6,182,212,0.08)] text-[#0891B2]'
-                                : 'bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
-                              : isBlueCard
-                                ? 'bg-[rgba(6,182,212,0.08)] text-[#0891B2]'
-                                : 'bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
-                          }`}
+                          key={`${project._id || project.title}-${tech}`}
+                          className="rounded-full border border-[#e7e9f3] bg-[#f7f8fb] px-2.5 py-1 text-[11px] font-semibold text-[#6b7085]"
                         >
-                          {statusLabel}
+                          {tech}
                         </span>
-                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                          isBlueCard
-                            ? 'border border-[rgba(37,99,235,0.10)] bg-[rgba(37,99,235,0.08)] text-[#2563EB]'
-                            : 'border border-[rgba(124,58,237,0.10)] bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
-                        }`}>
-                          {(project.category || 'Other')}
-                        </span>
-                      </div>
+                      ))}
                     </div>
+                  </div>
 
-                    <div className="space-y-3">
-                      <h3 className="text-xl font-semibold text-slate-900">{project.title}</h3>
-                      <p className="text-sm leading-7 text-slate-600">{project.description}</p>
-                    </div>
+                  <div className="mt-6 flex gap-3 pt-1">
+                    {liveUrl && (
+                      <a
+                        href={liveUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 ${palette.button}`}
+                      >
+                        <FaExternalLinkAlt className="h-3.5 w-3.5" aria-hidden="true" />
+                        Live Demo
+                      </a>
+                    )}
 
-                    <div className={`my-5 h-px w-full ${isBlueCard ? 'bg-[rgba(37,99,235,0.12)]' : 'bg-[rgba(124,58,237,0.12)]'}`} />
-
-                    <div className="mb-5">
-                      <p className={`mb-3 text-[10px] font-bold uppercase tracking-[0.2em] ${isBlueCard ? 'text-[#2563EB]' : 'text-[#7C3AED]'}`}>
-                        Tech Stack
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {(project.technologies || []).map((tech) => (
-                          <span
-                            key={`${project._id}-${tech}`}
-                            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                              isBlueCard
-                                ? 'border-[rgba(37,99,235,0.10)] bg-[rgba(37,99,235,0.08)] text-[#2563EB]'
-                                : 'border-[rgba(124,58,237,0.10)] bg-[rgba(124,58,237,0.08)] text-[#7C3AED]'
-                            }`}
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-auto flex flex-wrap gap-3 pt-2">
-                      {liveUrl && (
-                        <a
-                          href={liveUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-200 ${
-                            isBlueCard
-                              ? 'bg-gradient-to-r from-[#2563EB] to-[#3B82F6] hover:brightness-105'
-                              : 'bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6] hover:brightness-105'
-                          }`}
-                        >
-                          <FaExternalLinkAlt className="text-xs" />
-                          Live Demo
-                        </a>
-                      )}
-                      {githubUrl && (
-                        <a
-                          href={githubUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#DDE5F0] bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-[#2563EB] hover:text-[#2563EB]"
-                        >
-                          <FaGithub className="text-sm" />
-                          GitHub
-                        </a>
-                      )}
-                    </div>
+                    {githubUrl && (
+                      <a
+                        href={githubUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#e7e9f3] bg-white px-4 py-2.5 text-sm font-semibold text-[#14172b] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#6d5ef8] hover:text-[#6d5ef8]"
+                      >
+                        <FaGithub className="h-3.5 w-3.5" aria-hidden="true" />
+                        GitHub
+                      </a>
+                    )}
                   </div>
                 </motion.article>
               )
