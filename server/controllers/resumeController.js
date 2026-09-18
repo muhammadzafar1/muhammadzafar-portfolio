@@ -13,6 +13,15 @@ function resolveFileSystemPath(fileUrl) {
   const cleanPath = pathname.replace(/^\/+/, '')
 
   if (!cleanPath) return null
+
+  if (process.env.UPLOADS_DIR) {
+    const configuredRoot = path.resolve(process.env.UPLOADS_DIR)
+    if (cleanPath.startsWith('uploads/')) {
+      return path.join(configuredRoot, cleanPath.replace(/^uploads[\\/]+/, ''))
+    }
+    return path.join(configuredRoot, cleanPath)
+  }
+
   return path.join(process.cwd(), cleanPath)
 }
 
@@ -62,13 +71,19 @@ export async function getResume(req, res) {
       return res.status(404).json({ message: 'Resume not available' })
     }
 
-    if (req.path === '/download' || req.originalUrl.endsWith('/download')) {
-      const safePath = getStoredResumePath(resume)
-      if (!safePath) {
-        return res.status(404).json({ message: 'Resume file not found' })
-      }
+    const storedPath = getStoredResumePath(resume)
+    if (!storedPath) {
+      console.warn('Resume metadata exists but file is missing on disk.', {
+        fileName: resume.fileName,
+        storagePath: resume.storagePath,
+        fileUrl: resume.fileUrl
+      })
 
-      return res.download(safePath, resume.fileName || 'resume.pdf')
+      return res.status(404).json({ message: 'Resume file not found' })
+    }
+
+    if (req.path === '/download' || req.originalUrl.endsWith('/download')) {
+      return res.download(storedPath, resume.fileName || 'resume.pdf')
     }
 
     res.json(serializeResume(resume))

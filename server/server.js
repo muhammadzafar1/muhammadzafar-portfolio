@@ -34,11 +34,15 @@ if (missing.length > 0) {
 }
 
 // ── Upload directories (create on startup so Multer never fails) ──────────
-const uploadDirs = ['uploads', 'uploads/projects', 'uploads/resume']
+const uploadsRoot = process.env.UPLOADS_DIR ? path.resolve(process.env.UPLOADS_DIR) : path.join(process.cwd(), 'uploads')
+if (!process.env.UPLOADS_DIR) {
+  console.warn('UPLOADS_DIR is not set. Resume uploads are stored in the local filesystem and may disappear after a deploy/restart on ephemeral hosts.')
+}
+
+const uploadDirs = [uploadsRoot, path.join(uploadsRoot, 'projects'), path.join(uploadsRoot, 'resume')]
 for (const dir of uploadDirs) {
-  const fullPath = path.join(process.cwd(), dir)
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true })
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
   }
 }
 
@@ -132,7 +136,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }))
 // Sanitised morgan — log method, url, status, response-time only
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
 
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+app.use('/uploads', express.static(uploadsRoot))
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

@@ -8,8 +8,13 @@ import path from 'path'
 
 const router = express.Router()
 
-const resumeUploadPath = path.join(process.cwd(), 'uploads', 'resume')
+const uploadsRoot = process.env.UPLOADS_DIR ? path.resolve(process.env.UPLOADS_DIR) : path.join(process.cwd(), 'uploads')
+const resumeUploadPath = path.join(uploadsRoot, 'resume')
 if (!fs.existsSync(resumeUploadPath)) fs.mkdirSync(resumeUploadPath, { recursive: true })
+
+if (!process.env.UPLOADS_DIR) {
+  console.warn('Resume uploads are using the local filesystem. On live hosts with ephemeral storage, the resume can disappear after deploy/restart.')
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, resumeUploadPath),
