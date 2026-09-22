@@ -79,8 +79,8 @@ export default function Contact() {
                 <div className="mt-10 space-y-4 border-t border-white/10 pt-6">
                   <div className="flex items-start justify-between gap-4 text-sm text-[#edf0ef]">
                     <span className="text-[#adc0b9]">Email</span>
-                    <a href="mailto:hello@yourdomain.com" className="text-right text-[#f7f9f8] transition hover:text-[#dfeae6]">
-                      hello@yourdomain.com
+                    <a href="mailto:muhammadzafar3939@gmail.com" className="text-right text-[#f7f9f8] transition hover:text-[#dfeae6]">
+                      muhammadzafar3939@gmail.com
                     </a>
                   </div>
 

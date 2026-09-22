@@ -1,6 +1,7 @@
 import Resume from '../models/Resume.js'
 import path from 'path'
 import fs from 'fs'
+import { execSync } from 'child_process'
 
 function getCurrentResume() {
   return Resume.findOne().sort({ uploadedAt: -1 })
@@ -60,7 +61,7 @@ function serializeResume(resume) {
   const plainResume = resume.toObject ? resume.toObject() : { ...resume }
   return {
     ...plainResume,
-    fileUrl: buildResumeFileUrl()
+    fileUrl: plainResume.fileUrl && plainResume.fileUrl.startsWith('http') ? plainResume.fileUrl : buildResumeFileUrl()
   }
 }
 
@@ -78,6 +79,12 @@ export async function getResume(req, res) {
         storagePath: resume.storagePath,
         fileUrl: resume.fileUrl
       })
+
+      // If the stored file is hosted externally (e.g. raw.githubusercontent.com),
+      // redirect the download request to that URL so users can download directly.
+      if ((resume.fileUrl || '').startsWith('http') && (req.path === '/download' || req.originalUrl.endsWith('/download'))) {
+        return res.redirect(resume.fileUrl)
+      }
 
       return res.status(404).json({ message: 'Resume file not found' })
     }
@@ -111,8 +118,57 @@ export async function uploadResume(req, res) {
       await currentResume.deleteOne()
     }
 
-    const fileUrl = buildResumeFileUrl()
+    let fileUrl = buildResumeFileUrl()
     const storagePath = buildStoredResumePath(req.file.filename)
+
+    // Optionally persist the uploaded file into the git repository and push
+    // This path uses SSH deploy key (no token). Environment variables:
+    // - GIT_PERSIST=true
+    // - GIT_SSH_KEY (private key contents)
+    // - GIT_RAW_BASE_URL (e.g. https://raw.githubusercontent.com/user/repo/branch)
+    // - GIT_STORE_PATH (optional, repo-relative path to store files, default: public/resume)
+    // - GIT_BRANCH (optional, default: main)
+    if (process.env.GIT_PERSIST === 'true' && process.env.GIT_SSH_KEY && process.env.GIT_RAW_BASE_URL) {
+      try {
+        const repoRoot = process.cwd()
+        const repoStoreRel = process.env.GIT_STORE_PATH || path.join('public', 'resume')
+        const repoStoreAbs = path.isAbsolute(repoStoreRel) ? repoStoreRel : path.join(repoRoot, repoStoreRel)
+        if (!fs.existsSync(repoStoreAbs)) fs.mkdirSync(repoStoreAbs, { recursive: true })
+
+        const src = getStoredResumePath({ storagePath: storagePath }) || path.join(process.cwd(), storagePath.replace(/^\/+/, ''))
+        const destFilename = req.file.filename
+        const destAbs = path.join(repoStoreAbs, destFilename)
+        fs.copyFileSync(path.join(process.cwd(), 'uploads', 'resume', req.file.filename), destAbs)
+
+        // write SSH key to temp file
+        const tmpKeyPath = path.join(repoRoot, '.git_deploy_key')
+        fs.writeFileSync(tmpKeyPath, process.env.GIT_SSH_KEY + '\n', { mode: 0o600 })
+
+        const branch = process.env.GIT_BRANCH || 'main'
+        const relPathForUrl = path.posix.join(repoStoreRel.split(path.sep).join('/'), destFilename)
+        const rawUrl = `${process.env.GIT_RAW_BASE_URL.replace(/\/$/, '')}/${relPathForUrl}`
+
+        const gitEnv = {
+          ...process.env,
+          GIT_SSH_COMMAND: `ssh -i ${tmpKeyPath} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`
+        }
+
+        try {
+          execSync(`git add -- ${relPathForUrl}`, { cwd: repoRoot, env: gitEnv })
+          try {
+            execSync(`git commit -m "Add resume ${destFilename} via app" -- ${relPathForUrl}`, { cwd: repoRoot, env: gitEnv })
+          } catch (e) {
+            // commit may fail if nothing changed; ignore
+          }
+          execSync(`git push origin ${branch}`, { cwd: repoRoot, env: gitEnv, stdio: 'ignore' })
+          fileUrl = rawUrl
+        } finally {
+          try { fs.unlinkSync(tmpKeyPath) } catch (e) {}
+        }
+      } catch (err) {
+        console.error('Git persistence failed:', err && err.message ? err.message : err)
+      }
+    }
     const resumeData = {
       fileName: req.file.originalname,
       fileUrl,
@@ -147,8 +203,49 @@ export async function replaceResume(req, res) {
       }
     }
 
-    const fileUrl = buildResumeFileUrl()
+    let fileUrl = buildResumeFileUrl()
     const storagePath = buildStoredResumePath(req.file.filename)
+
+    if (process.env.GIT_PERSIST === 'true' && process.env.GIT_SSH_KEY && process.env.GIT_RAW_BASE_URL) {
+      try {
+        const repoRoot = process.cwd()
+        const repoStoreRel = process.env.GIT_STORE_PATH || path.join('public', 'resume')
+        const repoStoreAbs = path.isAbsolute(repoStoreRel) ? repoStoreRel : path.join(repoRoot, repoStoreRel)
+        if (!fs.existsSync(repoStoreAbs)) fs.mkdirSync(repoStoreAbs, { recursive: true })
+
+        const destFilename = req.file.filename
+        const destAbs = path.join(repoStoreAbs, destFilename)
+        fs.copyFileSync(path.join(process.cwd(), 'uploads', 'resume', req.file.filename), destAbs)
+
+        const tmpKeyPath = path.join(repoRoot, '.git_deploy_key')
+        fs.writeFileSync(tmpKeyPath, process.env.GIT_SSH_KEY + '\n', { mode: 0o600 })
+
+        const branch = process.env.GIT_BRANCH || 'main'
+        const relPathForUrl = path.posix.join(repoStoreRel.split(path.sep).join('/'), destFilename)
+        const rawUrl = `${process.env.GIT_RAW_BASE_URL.replace(/\/$/, '')}/${relPathForUrl}`
+
+        const gitEnv = {
+          ...process.env,
+          GIT_SSH_COMMAND: `ssh -i ${tmpKeyPath} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`
+        }
+
+        try {
+          execSync(`git add -- ${relPathForUrl}`, { cwd: repoRoot, env: gitEnv })
+          try {
+            execSync(`git commit -m "Replace resume ${destFilename} via app" -- ${relPathForUrl}`, { cwd: repoRoot, env: gitEnv })
+          } catch (e) {
+            // ignore commit errors
+          }
+          execSync(`git push origin ${branch}`, { cwd: repoRoot, env: gitEnv, stdio: 'ignore' })
+          fileUrl = rawUrl
+        } finally {
+          try { fs.unlinkSync(tmpKeyPath) } catch (e) {}
+        }
+      } catch (err) {
+        console.error('Git persistence failed:', err && err.message ? err.message : err)
+      }
+    }
+
     const resumeData = {
       fileName: req.file.originalname,
       fileUrl,
