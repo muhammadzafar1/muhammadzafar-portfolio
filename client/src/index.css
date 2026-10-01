@@ -4,5 +4,60 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  margin: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+@keyframes ringIn {
+  from {
+    stroke-dashoffset: 176;
+  }
+  to {
+    stroke-dashoffset: var(--off);
+  }
+}
+
+@keyframes ringHover {
+  from {
+    stroke-dashoffset: 176;
+  }
+  to {
+    stroke-dashoffset: var(--off);
+  }
+}
+
+.ring-value {
+  stroke-dashoffset: var(--off);
+}
+
+.is-ready .ring-value {
+  animation: ringIn 1.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+@media (hover: hover) {
+  .is-ready .skill-card:hover .ring-value {
+    animation: ringHover 1.8s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 70%, transparent));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-value {
+    animation: none !important;
+  }
+}
+
 
 

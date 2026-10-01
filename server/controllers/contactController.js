@@ -1,72 +1,34 @@
-import nodemailer from "nodemailer";
-import Message from "../models/Message.js";
 import dotenv from "dotenv";
+import Message from "../models/Message.js";
+import { sendContactEmail } from "../utils/sendEmail.js";
+
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Only verify SMTP when credentials are actually provided
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  transporter.verify((error) => {
-    if (error) {
-      console.log("SMTP Error:", error.message);
-    } else {
-      console.log("SMTP Server is ready");
-    }
-  });
-}
-
 async function sendNotificationEmail({
+  messageId,
   name,
   email,
   subject,
   message,
-  createdAt,
 }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error("EMAIL_USER or EMAIL_PASS is missing in .env");
+  try {
+    console.log("📤 Sending notification email for message:", messageId);
+    await sendContactEmail({ name, email, subject, message });
+
+    await Message.findByIdAndUpdate(messageId, {
+      status: "sent",
+      emailError: null,
+    });
+
+    console.log("✅ Notification email sent successfully for message:", messageId);
+  } catch (error) {
+    await Message.findByIdAndUpdate(messageId, {
+      status: "failed",
+      emailError: error?.message || "Unknown email error",
+    });
+
+    console.error("Contact notification email failed:", error?.message || error);
   }
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_USER,
-    replyTo: email,
-    subject: `📩 New Portfolio Contact Message - ${subject}`,
-
-    html: `
-      <h2>New Portfolio Contact Message</h2>
-
-      <p><b>Name:</b> ${name}</p>
-
-      <p><b>Email:</b> ${email}</p>
-
-      <p><b>Subject:</b> ${subject}</p>
-
-      <p><b>Message:</b></p>
-
-      <p>${message}</p>
-
-      <hr>
-
-      <small>${createdAt}</small>
-    `,
-  };
-
-  console.log("📤 Sending notification email...");
-  console.log("   To:", mailOptions.to);
-  console.log("   Subject:", mailOptions.subject);
-
-  await transporter.sendMail(mailOptions);
-
-  console.log("✅ Notification email sent successfully");
 }
 
 export async function submitContact(req, res) {
@@ -86,35 +48,27 @@ export async function submitContact(req, res) {
 
   console.log("Persisting message to MongoDB...");
 
-  // Always persist the contact message first
   const newMessage = await Message.create({
     name,
     email,
     subject,
     message,
+    status: "pending",
   });
 
   console.log("✅ Message saved to DB with id:", newMessage._id);
 
-  // Email notification is best-effort: if SMTP fails (e.g. not configured
-  // on Railway yet), the contact message is still saved and the visitor
-  // still gets a success response. The error is logged, not fatal.
-  try {
-    await sendNotificationEmail({
-      name: newMessage.name,
-      email: newMessage.email,
-      subject: newMessage.subject,
-      message: newMessage.message,
-      createdAt: newMessage.createdAt,
-    });
-  } catch (emailError) {
-    console.error("Contact notification email failed:", emailError.message);
-  }
-
-  console.log("📨 Responding success to client");
   res.status(200).json({
     success: true,
     message: "Message sent successfully.",
+  });
+
+  void sendNotificationEmail({
+    messageId: newMessage._id,
+    name: newMessage.name,
+    email: newMessage.email,
+    subject: newMessage.subject,
+    message: newMessage.message,
   });
 }
 

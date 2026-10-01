@@ -68,8 +68,9 @@ const connectDb = async () => {
 
     const resolvedUri = uri.startsWith('mongodb+srv://') ? await resolveAtlasSrvUri(uri) : uri
     const conn = await mongoose.connect(resolvedUri, {
-      serverSelectionTimeoutMS: 15000,
-      connectTimeoutMS: 15000,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
       socketTimeoutMS: 45000
     })
 

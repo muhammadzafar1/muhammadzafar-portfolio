@@ -41,7 +41,7 @@ export default function About({
   return (
     <section
       id="about"
-      className="relative left-1/2 w-screen -ml-[50vw] scroll-mt-24 bg-[#f6f7fb] py-16 sm:py-20 lg:py-24"
+      className="relative scroll-mt-24 bg-[#f6f7fb] py-12 sm:py-14 lg:py-16"
       style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
     >
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">

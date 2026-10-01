@@ -2,10 +2,11 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 dotenv.config()
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 import fs from 'fs'
 import path from 'path'
 import connectDb from './config/db.js'
@@ -25,7 +26,6 @@ import messageRoutes from './routes/messageRoutes.js'
 import mediaRoutes from './routes/mediaRoutes.js'
 import { errorHandler } from './middlewares/errorHandler.js'
 
-// ── Required environment variable validation ──────────────────────────────
 const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET']
 const missing = requiredEnvVars.filter((key) => !process.env[key])
 if (missing.length > 0) {
@@ -33,7 +33,6 @@ if (missing.length > 0) {
   process.exit(1)
 }
 
-// ── Upload directories (create on startup so Multer never fails) ──────────
 const uploadsRoot = process.env.UPLOADS_DIR ? path.resolve(process.env.UPLOADS_DIR) : path.join(process.cwd(), 'uploads')
 if (!process.env.UPLOADS_DIR) {
   console.warn('UPLOADS_DIR is not set. Resume uploads are stored in the local filesystem and may disappear after a deploy/restart on ephemeral hosts.')
@@ -76,66 +75,65 @@ const ensureAdminExists = async () => {
   }
 }
 
-// ── Middleware (order matters) ────────────────────────────────────────────
+app.use(compression())
 app.use(helmet())
-
-// trust proxy — required on Railway (behind load balancer) so that
-// express sees the real client IP (for rate-limiting) and the correct
-// protocol (req.protocol → 'https') for uploaded file URLs.
 app.set('trust proxy', 1)
 
-// ── CORS ──────────────────────────────────────────────────────────────────
-const allowedOrigins = [
-  'https://www.muhammadzafar.online',
-  'https://muhammadzafar.online',
-  'https://muhammadzafar-portfolio.vercel.app',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:5174',
-  'http://127.0.0.1:5174',
-  'http://localhost:5175'
-]
+app.use((req, res, next) => {
+  const start = Date.now()
+  res.on('finish', () => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[request] ${req.method} ${req.originalUrl} ${Date.now() - start}ms`)
+    }
+  })
+  next()
+})
 
-const envOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+const envClientOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
   : []
 
-const corsOrigins = [...new Set([...envOrigins, ...allowedOrigins])]
+const allowedOrigins = [
+  ...new Set([
+    ...envClientOrigins,
+    'https://www.muhammadzafar.online',
+    'https://muhammadzafar.online',
+    'https://muhammadzafar-portfolio.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+    'http://localhost:5175'
+  ])
+]
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin) {
-      // allow non-browser tools like Postman, or same-origin requests without Origin header
-      return callback(null, true)
-    }
-
-    if (corsOrigins.includes(origin)) {
-      return callback(null, true)
-    }
-
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
     return callback(new Error(`CORS origin denied: ${origin}`), false)
   },
-  credentials: true,
+  credentials: false,
   allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  maxAge: 86400
 }))
 
 app.options('*', cors({
   origin(origin, callback) {
     if (!origin) return callback(null, true)
-    return corsOrigins.includes(origin) ? callback(null, true) : callback(new Error(`CORS origin denied: ${origin}`), false)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    return callback(new Error(`CORS origin denied: ${origin}`), false)
   },
-  credentials: true
+  credentials: false,
+  maxAge: 86400
 }))
 
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ limit: '50mb', extended: true }))
-
-// Sanitised morgan — log method, url, status, response-time only
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'))
-
 app.use('/uploads', express.static(uploadsRoot))
 
 const limiter = rateLimit({
@@ -147,7 +145,6 @@ const limiter = rateLimit({
 
 app.use(limiter)
 
-// ── Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes)
 app.use('/api/hero', heroRoutes)
 app.use('/api/about', aboutRoutes)
@@ -162,7 +159,8 @@ app.use('/api/messages', messageRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/media', mediaRoutes)
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
+app.get('/health', (req, res) => res.json({ ok: true }))
+app.get('/api/health', (req, res) => res.json({ ok: true }))
 
 app.use((req, res) => {
   res.status(404).json({ message: 'API endpoint not found' })

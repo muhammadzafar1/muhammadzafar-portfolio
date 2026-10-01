@@ -1,18 +1,16 @@
 import axios from 'axios'
 
-const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
-const normalized = rawBase.replace(/\/+$/g, '')
-const API_BASE_URL = normalized.endsWith('/api') ? normalized : `${normalized}/api`
+const rawBase = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || window.location.origin).replace(/\/+$/g, '')
+const API_BASE_URL = rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: false,
 })
 
 export const getApiOrigin = () => {
-  const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
-  const normalized = rawBase.replace(/\/+$/g, '')
-  return normalized.endsWith('/api') ? normalized.replace(/\/api$/i, '') : normalized
+  const rawBase = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || window.location.origin).replace(/\/+$/g, '')
+  return rawBase.endsWith('/api') ? rawBase.replace(/\/api$/i, '') : rawBase
 }
 
 export const getResumeDownloadUrl = (resumeFileUrl) => {
@@ -93,7 +91,7 @@ export const uploadResume = (payload, config) => api.post('/resume/upload', payl
 export const replaceResume = (payload, config) => api.put('/resume/replace', payload, config)
 export const deleteResume = (token) => api.delete('/resume/delete', { headers: { Authorization: `Bearer ${token}` } })
 export const submitContact = (payload) => api.post('/contact', payload)
-export const adminLogin = (payload) => api.post('/auth/login', payload)
+export const adminLogin = (payload, config = {}) => api.post('/auth/login', payload, config)
 export const createProject = (payload, config) => api.post('/projects', payload, config)
 export const updateProject = (id, payload, config) => api.put(`/projects/${id}`, payload, config)
 export const deleteProject = (id, token) => api.delete(`/projects/${id}`, { headers: { Authorization: `Bearer ${token}` } })

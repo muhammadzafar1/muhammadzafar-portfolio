@@ -1,55 +1,52 @@
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 
 export async function login(req, res) {
   try {
     const { email, password } = req.body || {}
-
-    console.log("========== LOGIN DEBUG ==========")
-    console.log("Entered Email:", email)
+    const totalStart = Date.now()
 
     if (!email || !password) {
       return res.status(400).json({
-        message: "Email and password are required"
+        message: 'Email and password are required'
       })
     }
 
-    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = String(email).trim().toLowerCase()
 
-console.log("Entered Email:", email);
-console.log("Normalized Email:", normalizedEmail);
+    let user = null
+    let dbMs = 0
+    let bcryptMs = 0
+    let jwtMs = 0
+    let extraMs = 0
 
-    const user = await User.findOne({ email: normalizedEmail })
-    console.log("User:", user);
-
-    console.log("User Found:", user ? "YES" : "NO")
+    const dbStart = Date.now()
+    console.time('[login] db')
+    user = await User.findOne({ email: normalizedEmail }).select('+password name email role').lean()
+    console.timeEnd('[login] db')
+    dbMs = Date.now() - dbStart
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid credentials"
+        message: 'Invalid credentials'
       })
     }
-    console.log("Entered Password:", password);
-console.log("Stored Hash:", user.password);
 
-    console.log("Database Email:", user.email)
-    console.log("Database Role:", user.role)
-    console.log("Entered Password:", password)
-    console.log("Password Hash:", user.password)
-
-    const isMatch = await bcrypt.compare(password, user.password)
-
-  console.log("Password Match:", isMatch);
+    const bcryptStart = Date.now()
+    console.time('[login] bcrypt')
+    const isMatch = await bcrypt.compare(String(password), user.password)
+    console.timeEnd('[login] bcrypt')
+    bcryptMs = Date.now() - bcryptStart
 
     if (!isMatch) {
       return res.status(401).json({
-        message: "Invalid credentials"
+        message: 'Invalid credentials'
       })
     }
 
-    console.log("✅ Login Successful")
-
+    const jwtStart = Date.now()
+    console.time('[login] jwt')
     const token = jwt.sign(
       {
         id: user._id,
@@ -57,9 +54,16 @@ console.log("Stored Hash:", user.password);
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "8h"
+        expiresIn: '8h'
       }
     )
+    console.timeEnd('[login] jwt')
+    jwtMs = Date.now() - jwtStart
+
+    const totalMs = Date.now() - totalStart
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[login] db=${dbMs}ms bcrypt=${bcryptMs}ms jwt=${jwtMs}ms extra=${extraMs}ms total=${totalMs}ms`)
+    }
 
     return res.json({
       token,
@@ -70,12 +74,11 @@ console.log("Stored Hash:", user.password);
         role: user.role
       }
     })
-
   } catch (err) {
-    console.error("LOGIN ERROR:", err)
+    console.error('LOGIN ERROR:', err)
 
     return res.status(500).json({
-      message: "Server Error"
+      message: 'Server Error'
     })
   }
 }

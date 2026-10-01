@@ -38,8 +38,8 @@ const services = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white/95 py-12 min-h-[90vh] flex flex-col justify-center">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:flex-row lg:items-center lg:justify-start lg:gap-24 xl:gap-32">
+    <footer className="border-t border-slate-200 bg-white/95 py-10 md:py-12">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 lg:flex-row lg:items-center lg:justify-start lg:gap-24 xl:gap-32">
         <div>
           <a href="#home" className="flex items-center gap-3 text-lg font-semibold text-slate-900">
             <img
@@ -96,7 +96,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto mt-12 max-w-7xl px-6">
+      <div className="mx-auto mt-8 max-w-7xl px-6">
         <div className="flex items-center justify-center gap-3">
           {socials.map((social) => (
             <a key={social.label} href={social.url} target="_blank" rel="noreferrer" className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:text-white ${social.colorClass} ${social.hoverClass}`} aria-label={social.label}>
@@ -104,7 +104,7 @@ export default function Footer() {
             </a>
           ))}
         </div>
-        <div className="mt-8 border-t border-slate-200 pt-8 text-center">
+        <div className="mt-6 border-t border-slate-200 pt-6 text-center">
           <p className="text-sm text-slate-500">© 2026 Muhammad Zafar. All rights reserved.</p>
         </div>
       </div>

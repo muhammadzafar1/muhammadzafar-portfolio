@@ -128,7 +128,7 @@ export default function Projects() {
         </div>
 
         {loading ? (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {[...Array(4)].map((_, index) => (
               <div
                 key={index}
@@ -150,7 +150,7 @@ export default function Projects() {
             No projects in this category yet.
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {filteredProjects.map((project, index) => {
               const IconComponent = project.icon && iconMap[project.icon] ? iconMap[project.icon] : FaCode
               const liveUrl = project.liveUrl || project.liveDemo || ''
@@ -183,8 +183,11 @@ export default function Projects() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
                   whileHover={{ y: -6 }}
-                  className="group flex h-full flex-col rounded-2xl border border-[#e7e9f3] bg-[#ffffff] p-5 shadow-md transition-all duration-200 hover:shadow-xl"
+                  className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#e7e9f3] bg-[#ffffff] p-5 shadow-md transition-all duration-200 hover:shadow-xl"
                 >
+                  <span className="pointer-events-none absolute inset-x-0 top-0 h-1 origin-center scale-x-[.55] rounded-b-[4px] bg-[linear-gradient(90deg,#1d5bff,#7d4dff,#00b8ff,#1d5bff)] bg-[length:300%_100%] opacity-85 transition-all duration-500 ease-[cubic-bezier(.2,.8,.2,1)] group-hover:h-1.5 group-hover:scale-x-100 group-hover:rounded-none group-hover:opacity-100 group-hover:shadow-[0_6px_22px_rgba(109,74,255,.55)] group-hover:animate-lineflow motion-reduce:animate-none [@media(hover:none)]:scale-x-100 [@media(hover:none)]:opacity-100" style={{ backgroundImage: 'linear-gradient(90deg,#1d5bff,#7d4dff,#00b8ff,#1d5bff)', backgroundSize: '300% 100%' }} />
+                  <span className="pointer-events-none absolute left-[-100px] top-0 h-full w-[160px] -skew-x-[-20deg] bg-[linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent)] opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-hover:animate-lineflow motion-reduce:animate-none" />
+
                   <div className="mb-5 flex items-start justify-between gap-3">
                     <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${palette.soft}`}>
                       <IconComponent className="h-5 w-5" aria-hidden="true" />

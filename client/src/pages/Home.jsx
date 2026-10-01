@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <Navbar />
-      <main>
+      <main className="pt-[2px]">
         <Hero />
         <About />
         <Skills />
