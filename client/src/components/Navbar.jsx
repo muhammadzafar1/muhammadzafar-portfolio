@@ -36,8 +36,8 @@ export default function Navbar() {
               {item.label}
             </a>
           ))}
-          <a href="/admin/login" className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90">
-            Admin
+          <a href="/admin/login" className="rounded-full border border-slate-200 bg-transparent px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-sky-500 hover:text-white">
+            Login
           </a>
         </nav>
 
@@ -63,8 +63,8 @@ export default function Navbar() {
                   {item.label}
                 </a>
               ))}
-              <a href="/admin/login" className="rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
-                Admin
+              <a href="/admin/login" className="rounded-2xl border border-slate-200 bg-transparent px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-sky-500 hover:text-white">
+                Login
               </a>
             </div>
           </div>
