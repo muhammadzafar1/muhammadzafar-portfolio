@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { AdminContext } from '../context/AdminContext.jsx'
-import { fetchProjects, createProject, updateProject, deleteProject, fetchMessages, deleteMessage, markMessageRead, fetchResume, uploadResume, replaceResume, deleteResume } from '../services/api'
+import { fetchProjects, createProject, updateProject, deleteProject, fetchMessages, deleteMessage, markMessageRead } from '../services/api'
 import SkillManager from '../components/SkillManager.jsx'
 
 const iconOptions = [
@@ -36,11 +36,6 @@ export default function AdminDashboard() {
   const { token, setToken } = useContext(AdminContext)
   const [projects, setProjects] = useState([])
   const [messages, setMessages] = useState([])
-  const [resume, setResume] = useState(null)
-  const [resumeFile, setResumeFile] = useState(null)
-  const [resumeLoading, setResumeLoading] = useState(false)
-  const [resumeError, setResumeError] = useState(null)
-  const [resumeMessage, setResumeMessage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -60,18 +55,7 @@ export default function AdminDashboard() {
         setError(err.response?.data?.message || err.message)
       }
 
-      try {
-        const resumeResponse = await fetchResume()
-        setResume(resumeResponse.data)
-      } catch (err) {
-        if (err.response?.status === 404) {
-          setResume(null)
-        } else {
-          setError(err.response?.data?.message || err.message)
-        }
-      } finally {
-        setLoading(false)
-      }
+      setLoading(false)
     }
     loadData()
   }, [token])
@@ -89,71 +73,6 @@ export default function AdminDashboard() {
       return
     }
     setFormState((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleResumeFileChange = (event) => {
-    setResumeFile(event.target.files[0] || null)
-    setResumeError(null)
-    setResumeMessage(null)
-  }
-
-  const loadResume = async () => {
-    try {
-      const resumeResponse = await fetchResume()
-      setResume(resumeResponse.data)
-    } catch (err) {
-      if (err.response?.status === 404) {
-        setResume(null)
-      } else {
-        setError(err.response?.data?.message || err.message)
-      }
-    }
-  }
-
-  const handleUploadReplaceResume = async () => {
-    if (!resumeFile) {
-      setResumeError('Please select a CV file to upload.')
-      return
-    }
-
-    setResumeLoading(true)
-    setResumeError(null)
-    setResumeMessage(null)
-
-    try {
-      const formData = new FormData()
-      formData.append('resume', resumeFile)
-      const response = resume
-        ? await replaceResume(formData, { headers: { Authorization: `Bearer ${token}` } })
-        : await uploadResume(formData, { headers: { Authorization: `Bearer ${token}` } })
-      setResume(response.data)
-      setResumeMessage(resume ? 'Resume replaced successfully.' : 'Resume uploaded successfully.')
-      setResumeFile(null)
-    } catch (err) {
-      setResumeError(err.response?.data?.message || err.message)
-    } finally {
-      setResumeLoading(false)
-    }
-  }
-
-  const handleDeleteResume = async () => {
-    if (!resume) return
-    if (!confirm('Delete the current CV?')) return
-
-    setResumeLoading(true)
-    setResumeError(null)
-    setResumeMessage(null)
-
-    try {
-      await deleteResume(token)
-      setResume(null)
-      setResumeFile(null)
-      setResumeMessage('Resume deleted successfully.')
-    } catch (err) {
-      setResumeError(err.response?.data?.message || err.message)
-    } finally {
-      setResumeLoading(false)
-    }
   }
 
   const resetForm = () => {
@@ -262,59 +181,6 @@ export default function AdminDashboard() {
         </div>
 
         <section className="space-y-6">
-          <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-soft">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900">Resume Management</h2>
-                <p className="mt-2 text-sm text-slate-600">Upload, replace, preview, download, or delete the active CV.</p>
-              </div>
-              <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">{resume ? 'Active resume available' : 'No resume uploaded'}</span>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">File name</p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{resume?.fileName || '—'}</p>
-              </div>
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Upload date</p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{resume ? new Date(resume.uploadedAt).toLocaleString() : '—'}</p>
-              </div>
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">File size</p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{resume ? `${(resume.fileSize / 1024 / 1024).toFixed(2)} MB` : '—'}</p>
-              </div>
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">File type</p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{resume?.fileType || '—'}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
-                {resume ? 'Replace CV' : 'Upload CV'}
-                <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeFileChange} className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none file:rounded-full file:border-0 file:bg-[#eff6ff] file:px-4 file:py-2" />
-              </label>
-              <div className="flex flex-wrap items-end gap-3">
-                <button type="button" onClick={handleUploadReplaceResume} disabled={resumeLoading} className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-soft disabled:cursor-not-allowed disabled:opacity-60">
-                  {resume ? 'Replace CV' : 'Upload CV'}
-                </button>
-                <a href={resume?.fileUrl || '#'} target="_blank" rel="noreferrer" className={`inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold ${resume?.fileUrl ? 'bg-white text-slate-900 hover:bg-slate-50' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`} aria-disabled={!resume?.fileUrl}>
-                  Preview CV
-                </a>
-                <a href={resume?.fileUrl || '#'} download className={`inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold ${resume?.fileUrl ? 'bg-white text-slate-900 hover:bg-slate-50' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`} aria-disabled={!resume?.fileUrl}>
-                  Download CV
-                </a>
-                <button type="button" onClick={handleDeleteResume} disabled={!resume || resumeLoading} className="inline-flex items-center justify-center rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60">
-                  Delete CV
-                </button>
-              </div>
-            </div>
-
-            {resumeMessage && <div className="mt-4 rounded-3xl bg-emerald-50 px-5 py-4 text-sm text-emerald-700">{resumeMessage}</div>}
-            {resumeError && <div className="mt-4 rounded-3xl bg-red-50 px-5 py-4 text-sm text-red-700">{resumeError}</div>}
-          </div>
-
           <SkillManager />
 
           <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-soft">

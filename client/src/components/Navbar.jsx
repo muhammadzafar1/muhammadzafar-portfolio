@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
-import { FiMenu, FiX, FiDownload } from 'react-icons/fi'
-import { downloadResume, fetchResume } from '../services/api.js'
+import { useState } from 'react'
+import { FiMenu, FiX } from 'react-icons/fi'
 import heroImage from '../assets/images/logo.png'
 
 const navigation = [
@@ -14,23 +13,6 @@ const navigation = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
-  const [resume, setResume] = useState(null)
-
-  useEffect(() => {
-    fetchResume()
-      .then((response) => setResume(response.data))
-      .catch(() => setResume(null))
-  }, [])
-
-  const handleDownloadResume = async () => {
-    if (!resume?.fileUrl) return
-
-    try {
-      await downloadResume(resume.fileUrl, resume.fileName)
-    } catch (error) {
-      console.error('Resume download failed:', error)
-    }
-  }
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 h-20 border-b border-slate-200/80 bg-white">
@@ -57,22 +39,6 @@ export default function Navbar() {
           <a href="/admin/login" className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90">
             Admin
           </a>
-          {resume?.fileUrl ? (
-            <button
-              type="button"
-              onClick={handleDownloadResume}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-primary/90"
-            >
-              <FiDownload /> Download CV
-            </button>
-          ) : (
-            <button
-              disabled
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400 shadow-sm"
-            >
-              <FiDownload /> No Resume Available
-            </button>
-          )}
         </nav>
 
         <button className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-soft lg:hidden" onClick={() => setOpen((state) => !state)}>
@@ -100,19 +66,6 @@ export default function Navbar() {
               <a href="/admin/login" className="rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary/90">
                 Admin
               </a>
-              {resume?.fileUrl ? (
-                <button
-                  type="button"
-                  onClick={handleDownloadResume}
-                  className="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white"
-                >
-                  <FiDownload /> Download CV
-                </button>
-              ) : (
-                <button disabled className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-400">
-                  <FiDownload /> No Resume Available
-                </button>
-              )}
             </div>
           </div>
         </>

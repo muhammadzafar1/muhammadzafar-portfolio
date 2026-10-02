@@ -21,7 +21,6 @@ import educationRoutes from './routes/educationRoutes.js'
 import settingsRoutes from './routes/settingsRoutes.js'
 import heroRoutes from './routes/heroRoutes.js'
 import aboutRoutes from './routes/aboutRoutes.js'
-import resumeRoutes from './routes/resumeRoutes.js'
 import messageRoutes from './routes/messageRoutes.js'
 import mediaRoutes from './routes/mediaRoutes.js'
 import { errorHandler } from './middlewares/errorHandler.js'
@@ -35,10 +34,10 @@ if (missing.length > 0) {
 
 const uploadsRoot = process.env.UPLOADS_DIR ? path.resolve(process.env.UPLOADS_DIR) : path.join(process.cwd(), 'uploads')
 if (!process.env.UPLOADS_DIR) {
-  console.warn('UPLOADS_DIR is not set. Resume uploads are stored in the local filesystem and may disappear after a deploy/restart on ephemeral hosts.')
+  console.warn('UPLOADS_DIR is not set. Uploaded files are stored in the local filesystem and may disappear after a deploy/restart on ephemeral hosts.')
 }
 
-const uploadDirs = [uploadsRoot, path.join(uploadsRoot, 'projects'), path.join(uploadsRoot, 'resume')]
+const uploadDirs = [uploadsRoot, path.join(uploadsRoot, 'projects')]
 for (const dir of uploadDirs) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true })
@@ -154,7 +153,6 @@ app.use('/api/services', serviceRoutes)
 app.use('/api/experience', experienceRoutes)
 app.use('/api/education', educationRoutes)
 app.use('/api/settings', settingsRoutes)
-app.use('/api/resume', resumeRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/media', mediaRoutes)

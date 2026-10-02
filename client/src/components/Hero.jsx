@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FaGithub, FaLinkedin, FaWhatsapp, FaEnvelope } from 'react-icons/fa'
 import { useHero } from '../hooks/useHero'
-import { downloadResume, fetchResume } from '../services/api.js'
 import heroImage from '../assets/images/hero.png'
 
 const socialLinks = [
@@ -64,23 +62,6 @@ function AnimatedCard({ tech, style, delay }) {
 
 export default function Hero() {
   const { hero } = useHero()
-  const [resume, setResume] = useState(null)
-
-  useEffect(() => {
-    fetchResume()
-      .then((response) => setResume(response.data))
-      .catch(() => setResume(null))
-  }, [])
-
-  const handleDownloadResume = async () => {
-    if (!resume?.fileUrl) return
-
-    try {
-      await downloadResume(resume.fileUrl, resume.fileName || 'resume.pdf')
-    } catch (error) {
-      console.error('Resume download failed:', error)
-    }
-  }
 
   return (
     <section id="home" className="relative w-full overflow-hidden bg-white min-h-[calc(100vh-80px)] scroll-mt-24">
@@ -107,15 +88,6 @@ export default function Hero() {
             <a href="#projects" className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-8 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50">
               View My Work
             </a>
-            {resume?.fileUrl ? (
-              <button type="button" onClick={handleDownloadResume} className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-8 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50">
-                Download CV
-              </button>
-            ) : (
-              <button disabled className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-slate-100 px-8 text-sm font-semibold text-slate-400 shadow-sm">
-                No Resume Available
-              </button>
-            )}
           </div>
 
           <div className="flex items-center gap-3">
